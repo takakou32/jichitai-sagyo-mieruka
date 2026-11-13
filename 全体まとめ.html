@@ -77,7 +77,7 @@
   .ev a:hover b { text-decoration: underline; }
   .frame-note { margin-top: 10px; display: flex; gap: 16px; flex-wrap: wrap; color: var(--ink-2); font-size: 12px; }
 
-  /* 3. 切替の輪 */
+  /* 3. 切替の流れ */
   .loop-wrap { display: grid; grid-template-columns: 560px 1fr; gap: 14px; align-items: start; }
   svg text { font-family: inherit; }
   .stage { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -198,20 +198,31 @@
 
   var FLOWS = [
     { id: "prep", name: "移行の準備", guide: "各論/新人向け/説明_移行の準備.md",
+      timeline: {
+        cols: ["数か月前", "数週間前", "2週間前", "前日", "実施日"],
+        rows: [
+          { label: "A 切替日に向けて", items: [
+            { at: 0, t: "A1 要員の割り当て" }, { at: 1, t: "A3 要員の確定" }, { at: 2, t: "A2 手順書・資産の確定" }, { at: 3, t: "A4 事前作業" }, { at: 4, t: "実施", c: "run" }] },
+          { label: "C 移管資産", items: [
+            { from: 0, to: 1.4, t: "C1 取りまとめ（本来は随時）", c: "dash" }, { from: 1.4, to: 2, t: "C2 テスト" }, { at: 2, t: "C3 リリース" },
+            { from: 2, to: 4, t: "移行チームが一度通して実行", c: "outer" }] },
+          { label: "B 随時の修正", items: [{ from: 0, to: 2, t: "移行チームに渡す資産", end: "締切" }] },
+          { label: "", items: [{ from: 0, to: 3, t: "自チーム内の修正（手順書など）", end: "締切" }] }
+        ] },
       lead: [["基準日", "切替日（リハーサル日・本番切替日）"], ["移管", "開発担当分の業務（住民記録・宛名管理・印鑑登録など）の移行ツールのうち、抽出工程の実施は移行チームに移管している"], ["key", "前回の課題が反映されているか、団体ごとの差分が織り込まれているかを、2週間前の確定の時点で確かめる"]],
       phases: [
         { name: "A. 切替日に向けて", steps: [
           { no: "A1", t: "要員の概算の割り当て", when: "数か月前", who: "リーダー", c: "leader", done: "団体ごとに、担当者の見込みが立っている" },
-          { no: "A2", t: "手順書・資産の確定", when: "2週間前まで（C3 に合わせる）", who: "作業者（確認の観点はリーダーが伝える）", c: "own", done: "前回の課題を反映し、今回の団体向けの手順書・資産が確定している。移行チームへの移管資産は、C のリリースまで済んでいる。自チームだけで閉じる直しは、B のとおり前日まで受け付ける" },
+          { no: "A2", t: "手順書・資産の確定", when: "2週間前まで（C3 に合わせる）", who: "作業者（確認の観点はリーダーが伝える）", c: "own", done: "前回の課題を反映し、今回の団体向けの手順書・資産が確定している" },
           { no: "A3", t: "要員の確定", when: "数週間前", who: "リーダー", c: "leader", done: "当日の要員・連絡先・現場リーダー等が決まっている" },
           { no: "A4", t: "事前作業（初期化・資産の格納・手順書の印刷）", when: "前日", who: "作業者", c: "own", done: "事前作業の手順がすべて済んでいる" }
         ] },
-        { name: "B. 随時の修正", rule: { title: "日程は決めず、次のルールで回す", items: ["振り返りの課題・改善点・緊急リリースが出たら、ボードに起票する", "手順書・資産を直す", "直した版を記録する", "締め切りは2つ。移行チームに渡す資産は「A2 確定」（2週間前）まで。自チームだけで閉じる直し（手順書など）は「A4 事前作業」（前日）まで", "間に合わないものは、その切替では使わない"] },
+        { name: "B. 随時の修正", rule: { title: "日程は決めず、次のルールで回す", items: ["振り返りの課題・改善点・緊急リリースが出たら、ボードに起票する", "手順書・資産を直し、直した版を記録する", "締め切り（上の図）に間に合わないものは、その切替では使わない"] },
           steps: [] },
         { name: "C. 移行チームへの移管資産のリリース", steps: [
-          { no: "C1", t: "更新資産の取りまとめ", when: "本来は随時。遅くとも C3 の期限から逆算して始める", who: "開発担当（自チーム・センター職員）", c: "own", done: "開発担当分の業務について、抽出工程の更新資産がそろっている。抽出工程に手を入れたら、その場でボードに起票しておく（B と同じ）。そうすれば、取りまとめは起票を拾うだけで済む" },
+          { no: "C1", t: "更新資産の取りまとめ", when: "本来は随時。遅くとも C3 の期限から逆算して始める", who: "開発担当（自チーム・センター職員）", c: "own", done: "抽出工程の更新資産がそろっている。抽出工程に手を入れたら、その場でボードに起票しておく" },
           { no: "C2", t: "テストの実施", when: "C1 のあと", who: "自チーム", c: "own", done: "テストが済み、結果を記録している" },
-          { no: "C3", t: "移行チームへのリリース", when: "実施（リハーサル・全体移行テスト・本番切替）の2週間前まで（目安）", who: "自チーム → 移行チーム", c: "own", done: "移行チームが抽出工程を実施できる状態で、資産が渡っている。2週間の余裕は、移行チームが実施の前に一度通して実行するためのもの" }
+          { no: "C3", t: "移行チームへのリリース", when: "実施の2週間前まで（目安）", who: "自チーム → 移行チーム", c: "own", done: "移行チームが抽出工程を実施できる状態で、資産が渡っている" }
         ] }
       ] },
     { id: "run", name: "移行の実施", guide: "各論/新人向け/説明_移行の実施.md",
@@ -269,7 +280,14 @@
         ] }
       ] },
     { id: "vupost", name: "稼働後のバージョンアップ",
-      lead: [["基準日", "本番適用日"], ["key", "市町村への作業申請は5日前まで（規定）。稟議に2〜3日かかるため、開発管理台帳は8日前程度までに作る"]],
+      timeline: {
+        cols: ["リリース通知", "8日前", "5日前", "本番適用日"],
+        rows: [
+          { label: "受け入れ検証", items: [{ from: 0, to: 1, t: "4 開発環境へ適用 → 5 テスト" }] },
+          { label: "承認", items: [{ at: 1, t: "6 開発管理台帳" }, { from: 1, to: 2, t: "7 稟議（2〜3日）", c: "outer", end: "申請の期限（規定）" }, { at: 2, t: "8 作業申請" }] },
+          { label: "適用", items: [{ at: 3, t: "9 適用（閉庁後）", c: "run" }] }
+        ] },
+      lead: [["基準日", "本番適用日"]],
       phases: [
         { name: "受け取り", steps: [
           { no: "1", t: "リリース通知の受け取り", who: "開発担当", c: "outer", done: "開発元からの通知を受け取っている" },
@@ -391,10 +409,10 @@
     h("div", { "class": "frame-note" }, FRAME_NOTES.map(function (n) { return h("span", { text: "・" + n }); }))
   ])]);
 
-  // 3. 切替の輪
+  // 3. 切替の流れ
   function loopSvg() {
     var W = 560, H = 360, cx = 280, cy = 180, rx = 190, ry = 120;
-    var svg = s("svg", { width: W, height: H, viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": "切替の輪" });
+    var svg = s("svg", { width: W, height: H, viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": "リハーサルから本番までの繰り返し" });
     s("defs", {}, svg).innerHTML = '<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--axis)"/></marker>';
     s("ellipse", { cx: cx, cy: cy, rx: rx, ry: ry, fill: "none", stroke: "var(--axis)", "stroke-width": 2, "stroke-dasharray": "4 4" }, svg);
     var nodes = [
@@ -421,7 +439,7 @@
     return svg;
   }
   var stageBox = h("div", null, [
-    h("div", { "class": "fig-title", text: "移行結果の確認は3段階で進める（切替の輪と並行）" }),
+    h("div", { "class": "fig-title", text: "移行結果の確認（3段階。繰り返しと並行して進める）" }),
     h("div", { "class": "stage" }, [
       h("div", null, [h("b", { text: "① 事前の確認" }), h("div", { text: "R8年度中に、これまでの移行データで行う" }), h("div", { "class": "who", text: "自チーム" })]),
       h("div", null, [h("b", { text: "② 本確認" }), h("div", { text: "R9年度の稼働前に、稼働直前のリハーサルデータで行う" }), h("div", { "class": "who", text: "自チーム" })]),
@@ -429,7 +447,7 @@
     ]),
     h("div", { "class": "arrow-row", text: "①で理由がわかった差異を積み上げておくほど、②で人が調べる差異が減る" })
   ]);
-  sec("loop", "切替の輪と移行結果の確認", [h("div", { "class": "fig loop-wrap" }, [h("div", null, [loopSvg()]), stageBox])]);
+  sec("loop", "切替の流れ", [h("div", { "class": "fig loop-wrap" }, [h("div", null, [h("div", { "class": "fig-title", text: "リハーサルから本番までの繰り返し" }), loopSvg()]), stageBox])]);
 
   // 4. フロー
   var legend = h("div", { "class": "legend" }, [
@@ -440,6 +458,38 @@
     h("span", null, [h("i", { style: "background:var(--s3)" }), "AI：AIを使うところ"]),
     h("span", null, [h("span", { "class": "todo", text: "要確認" }), "：まだ決まっていない"])
   ]);
+  function timelineSvg(T) {
+    var LW = 120, W = 960, RH = 58, TOP = 26, n = T.cols.length - 1;
+    var H = TOP + RH * T.rows.length + 8, cw = (W - LW - 70) / n;
+    function X(i) { return LW + 20 + i * cw; }
+    var svg = s("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", style: "max-width:" + W + "px;display:block;margin-bottom:10px", role: "img", "aria-label": "基準日からの逆算" });
+    T.cols.forEach(function (c, i) {
+      var last = i === n;
+      s("line", { x1: X(i), x2: X(i), y1: TOP - 6, y2: H - 4, stroke: last ? "var(--today)" : "var(--grid)", "stroke-width": last ? 2 : 1, "stroke-dasharray": last ? "" : "3 3" }, svg);
+      st(c, { x: X(i), y: 14, "text-anchor": "middle", "class": "tick", "font-weight": last ? 700 : 400 }, svg);
+    });
+    T.rows.forEach(function (r, ri) {
+      var y = TOP + ri * RH + RH / 2;
+      if (r.label) st(r.label, { x: 0, y: y + 4, "class": "lane-label" }, svg);
+      r.items.filter(function (it) { return it.from != null; }).concat(r.items.filter(function (it) { return it.from == null; })).forEach(function (it) {
+        if (it.from != null) {
+          var x1 = X(it.from) + 2, x2 = X(it.to) - 2, outer = it.c === "outer";
+          s("rect", { x: x1, y: y - 10, width: x2 - x1, height: 20, rx: 4,
+            fill: outer ? "var(--s2-soft)" : "var(--s1-soft)", stroke: outer ? "var(--s2)" : "var(--s1)",
+            "stroke-dasharray": it.c === "dash" ? "4 3" : "" }, svg);
+          st(it.t, { x: (x1 + x2) / 2, y: y + 4, "text-anchor": "middle", fill: "var(--ink)", "font-size": 11 }, svg);
+          if (it.end) {
+            s("line", { x1: X(it.to), x2: X(it.to), y1: y - 16, y2: y + 16, stroke: "var(--todo)", "stroke-width": 3 }, svg);
+            st(it.end, { x: X(it.to) + 5, y: y - 8, fill: "var(--todo)", "font-size": 10, "font-weight": 700 }, svg);
+          }
+        } else {
+          s("circle", { cx: X(it.at), cy: y, r: 6, stroke: "var(--surface)", "stroke-width": 2, fill: it.c === "run" ? "var(--today)" : "var(--s1)" }, svg);
+          st(it.t, { x: X(it.at), y: y + 25, "text-anchor": "middle", fill: "var(--ink)", "font-size": 11, "font-weight": it.c === "run" ? 700 : 400 }, svg);
+        }
+      });
+    });
+    return svg;
+  }
   var flowFigs = [legend].concat(FLOWS.map(function (f) {
     var lead = h("div", { "class": "flow-lead" }, f.lead.map(function (l) {
       return h("span", { "class": "chip" + (l[0] === "key" ? " key" : "") }, [l[0] === "key" ? "" : l[0] + "：", l[1]]);
@@ -459,8 +509,9 @@
       if (p.rule) kids.push(h("div", { "class": "rule" }, [h("b", { text: p.rule.title }), h("ol", null, p.rule.items.map(function (i) { return h("li", { text: i }); }))]));
       return h("div", { "class": "phase" }, kids);
     }));
-    var title = h("div", { "class": "fig-title" }, [f.name, f.guide ? h("a", { href: f.guide, "class": "guide", text: "新人向けの説明（各論）→" }) : h("span", { "class": "guide muted", text: "新人向けの説明：未作成" })]);
-    return h("div", { "class": "fig", id: "flow-" + f.id }, [title, lead, cols]);
+    var tl = f.timeline ? timelineSvg(f.timeline) : null;
+    var title = h("div", { "class": "fig-title" }, [f.name, f.guide ? h("a", { href: f.guide, "class": "guide", text: "詳しい説明 →" }) : h("span", { "class": "guide muted", text: "詳しい説明：未作成" })]);
+    return h("div", { "class": "fig", id: "flow-" + f.id }, [title, lead, tl, cols]);
   }));
   sec("flows", "イベントごとのフロー", flowFigs);
 
