@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>マイルストーン</title>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface-1: #fcfcfb;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --border: rgba(11, 11, 11, 0.10);
+    --context: #c3c2b7;
+    --context-band: rgba(137, 135, 129, 0.10);
+    --today: #e34948;
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+    --series-3: #1baf7a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --page: #0d0d0d;
+      --surface-1: #1a1a19;
+      --text-primary: #ffffff;
+      --text-secondary: #c3c2b7;
+      --grid: #2c2c2a;
+      --axis: #383835;
+      --border: rgba(255, 255, 255, 0.10);
+      --context: #52514e;
+      --context-band: rgba(195, 194, 183, 0.08);
+      --today: #e66767;
+      --series-1: #3987e5;
+      --series-2: #d95926;
+      --series-3: #199e70;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface-1: #1a1a19;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.10);
+    --context: #52514e;
+    --context-band: rgba(195, 194, 183, 0.08);
+    --today: #e66767;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+  }
+
+  body { margin: 0; }
+  .viz-root {
+    background: var(--page);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", "Yu Gothic UI", "Meiryo UI", sans-serif;
+    font-size: 13px;
+    min-height: 100vh;
+    padding: 24px 28px 40px;
+    box-sizing: border-box;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--text-secondary); margin: 0 0 16px; }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 16px 16px 8px; }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; margin: 0 0 8px; color: var(--text-secondary); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { width: 14px; height: 8px; border-radius: 4px; display: inline-block; }
+  .sw.diamond { width: 9px; height: 9px; border-radius: 1px; transform: rotate(45deg); background: var(--text-primary); }
+  .sw.ctx { background: var(--context); }
+  .sw.today { width: 2px; height: 12px; border-radius: 0; background: var(--today); }
+  .scroll { overflow-x: auto; }
+  svg text { font-family: inherit; }
+  .lane-label { fill: var(--text-primary); font-size: 12px; }
+  .lane-group { fill: var(--text-muted); font-size: 11px; }
+  .tick { fill: var(--text-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .grid { stroke: var(--grid); stroke-width: 1; }
+  .axis { stroke: var(--axis); stroke-width: 1; }
+  .bar-label { fill: var(--text-primary); font-size: 11px; pointer-events: none; }
+  .ms-label { fill: var(--text-primary); font-size: 11px; font-weight: 600; pointer-events: none; }
+  .ms-date { fill: var(--text-secondary); font-size: 10px; pointer-events: none; font-variant-numeric: tabular-nums; }
+  .hit { fill: transparent; cursor: default; }
+  .mark { transition: opacity .12s; }
+  .dim .mark { opacity: .35; }
+  .dim .mark.on { opacity: 1; }
+  #tip {
+    position: fixed; pointer-events: none; z-index: 10; display: none;
+    background: var(--surface-1); color: var(--text-primary);
+    border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.12);
+    padding: 8px 10px; max-width: 300px; font-size: 12px; line-height: 1.5;
+  }
+  #tip b { display: block; margin-bottom: 2px; }
+  #tip .d { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+  .table-toggle { margin: 14px 0 6px; color: var(--text-secondary); cursor: pointer; }
+  table { border-collapse: collapse; width: 100%; background: var(--surface-1); font-size: 12px; }
+  th, td { border-bottom: 1px solid var(--grid); padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { color: var(--text-secondary); font-weight: 600; }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .note { color: var(--text-muted); font-size: 11px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="viz-root">
+  <h1>マイルストーン</h1>
+  <p class="sub">令和9年度の山場を、人が減ったり替わったりしても回せる状態にする。<b>フローをもとにしたツールが実運用に載ったら終わり。</b></p>
+
+  <div class="card">
+    <div class="legend" id="legend"></div>
+    <div class="scroll"><svg id="chart" role="img" aria-label="マイルストーンのタイムライン"></svg></div>
+  </div>
+
+  <details>
+    <summary class="table-toggle">表で見る</summary>
+    <table id="table"></table>
+  </details>
+  <p class="note">期限は定例の金曜に合わせている。M7（令和9年度 最初のリハーサル）の時期は未定のため、4月に仮置きしている。</p>
+</div>
+<div id="tip"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- データ ----------
+  // series: 1=フロー・設計（ここで決める） 2=ツール（現場で作る・使う） 3=展開 / ctx=本業・外部の予定
+  var SERIES = [
+    { key: "s1", name: "フロー・設計（ここで決める）", color: "var(--series-1)" },
+    { key: "s2", name: "ツール（現場で作る・使う）", color: "var(--series-2)" },
+    { key: "s3", name: "展開", color: "var(--series-3)" }
+  ];
+
+  var LANES = [
+    { id: "ms", group: "", label: "マイルストーン" },
+    { id: "flow", group: "つくる", label: "フロー・設計" },
+    { id: "tool", group: "つくる", label: "ツール" },
+    { id: "deploy", group: "つくる", label: "展開" },
+    { id: "work", group: "本業・予定", label: "実機研修向けの最新化（33団体）" },
+    { id: "cut", group: "本業・予定", label: "本番切替" }
+  ];
+
+  var BARS = [
+    { lane: "flow", s: "s1", from: "2026-11-13", to: "2026-12-04", label: "切替のフロー", desc: "郡上市の振り返りを反映し、切替のフロー3つを固める" },
+    { lane: "flow", s: "s1", from: "2026-12-07", to: "2026-12-18", label: "ツール決定", desc: "作るツールの一覧と優先順位を決める（後半の団体に間に合うものに絞る）" },
+    { lane: "flow", s: "s1", from: "2026-12-21", to: "2027-01-08", label: "設計", desc: "優先するツールの設計。現場でそのまま作り始められる形にする" },
+    { lane: "tool", s: "s2", from: "2027-01-11", to: "2027-01-29", label: "現場で作る", desc: "優先するツールを現場で作る" },
+    { lane: "tool", s: "s2", from: "2027-02-01", to: "2027-03-31", label: "実運用（後半の団体）", desc: "後半の団体の最新化と報告資料の作成で使う。これまでの記録と突き合わせて結果を確かめ、振り返りで直す" },
+    { lane: "deploy", s: "s3", from: "2027-02-01", to: "2027-03-19", label: "資料仕上げ・展開", desc: "その他・窓口ソリューションのフロー、全イベントの説明、HTML版の資料。来年度メンバーへの展開" },
+    { lane: "work", s: "ctx", from: "2026-12-01", to: "2027-01-31", label: "前半：従来の手順・ツール", desc: "前半の団体は、従来の手順とツールで片づける" },
+    { lane: "work", s: "ctx", from: "2027-02-01", to: "2027-03-31", label: "後半：フロー・ツールを投入", desc: "後半の団体で、確立したフローとツールを投入する（最初の実運用）" },
+    { lane: "cut", s: "ctx", from: "2026-11-20", to: "2026-11-23", label: "郡上市", desc: "郡上市の本番切替（稼働 11/24）。この週は資料づくりを止める" }
+  ];
+
+  var MILESTONES = [
+    { id: "M1", date: "2026-12-04", name: "切替のフローが固まる", make: "郡上市の振り返りと課題一覧、切替のフロー3つ（〔要確認〕なし）" },
+    { id: "M2", date: "2026-12-18", name: "作るツールが決まる", make: "作るツールの一覧と優先順位" },
+    { id: "M3", date: "2027-01-08", name: "ツールの設計ができる", make: "優先するツールの設計" },
+    { id: "M4", date: "2027-01-29", name: "ツールができる", make: "優先するツールを現場で作る" },
+    { id: "M5", date: "2027-02-01", name: "ツールが実運用に載る", make: "後半の団体で、フローとツールを使う" },
+    { id: "M6", date: "2027-03-19", name: "来年度に展開する", make: "資料の仕上げと、来年度メンバーへの展開" },
+    { id: "M7", date: "2027-04-15", name: "定着（完了）", make: "来年度のメンバーが、フローとツールで回せている", tentative: true }
+  ];
+
+  var BANDS = [{ from: "2026-12-29", to: "2027-01-03", label: "年末年始" }];
+  var TODAY = "2026-11-13";
+  var START = "2026-11-01", END = "2027-04-30";
+
+  // ---------- 配置 ----------
+  var DAY = 86400000;
+  function d(s) { var p = s.split("-"); return Date.UTC(+p[0], +p[1] - 1, +p[2]); }
+  function fmt(s) { var p = s.split("-"); return (+p[1]) + "/" + (+p[2]); }
+
+  var LABEL_W = 220, PX_PER_DAY = 6, TOP = 34, LANE_H = 40, MS_H = 58, PAD_R = 24;
+  var t0 = d(START), t1 = d(END);
+  var plotW = Math.round((t1 - t0) / DAY * PX_PER_DAY);
+  var W = LABEL_W + plotW + PAD_R;
+  function x(s) { return LABEL_W + (d(s) - t0) / DAY * PX_PER_DAY; }
+
+  var laneY = {}, y = TOP;
+  LANES.forEach(function (l) { laneY[l.id] = y; y += (l.id === "ms" ? MS_H : LANE_H); });
+  var H = y + 10;
+
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, parent) {
+    var n = document.createElementNS(NS, tag);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+  function text(str, attrs, parent) { var t = el("text", attrs, parent); t.textContent = str; return t; }
+
+  var svg = document.getElementById("chart");
+  svg.setAttribute("width", W); svg.setAttribute("height", H);
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+
+  // 背景の帯（年末年始）
+  BANDS.forEach(function (b) {
+    el("rect", { x: x(b.from), y: TOP - 6, width: x(b.to) - x(b.from) + PX_PER_DAY, height: H - TOP, fill: "var(--context-band)" }, svg);
+    text(b.label, { x: x(b.from) + 3, y: H - 4, "class": "tick" }, svg);
+  });
+
+  // 月の目盛り
+  var m = new Date(t0);
+  while (m.getTime() <= t1) {
+    var ms = m.getUTCFullYear() + "-" + String(m.getUTCMonth() + 1).padStart(2, "0") + "-01";
+    var gx = x(ms);
+    el("line", { x1: gx, x2: gx, y1: TOP - 6, y2: H - 10, "class": "grid" }, svg);
+    text((m.getUTCMonth() + 1) + "月" + (m.getUTCMonth() === 0 ? "（" + m.getUTCFullYear() + "）" : ""), { x: gx + 4, y: 16, "class": "tick" }, svg);
+    m = new Date(Date.UTC(m.getUTCFullYear(), m.getUTCMonth() + 1, 1));
+  }
+  el("line", { x1: LABEL_W, x2: LABEL_W + plotW, y1: TOP - 6, y2: TOP - 6, "class": "axis" }, svg);
+
+  // レーンの見出し
+  var lastGroup = null;
+  LANES.forEach(function (l) {
+    var ly = laneY[l.id], h = l.id === "ms" ? MS_H : LANE_H;
+    if (l.group && l.group !== lastGroup) {
+      text(l.group, { x: 0, y: ly + 8, "class": "lane-group" }, svg);
+      lastGroup = l.group;
+    }
+    text(l.label, { x: l.group ? 12 : 0, y: ly + h / 2 + 4, "class": "lane-label" }, svg);
+    el("line", { x1: 0, x2: LABEL_W + plotW, y1: ly + h, y2: ly + h, "class": "grid" }, svg);
+  });
+
+  var colorOf = { ctx: "var(--context)" };
+  SERIES.forEach(function (s) { colorOf[s.key] = s.color; });
+
+  // 横棒
+  var marks = [];
+  BARS.forEach(function (b) {
+    var g = el("g", { "class": "mark", "data-s": b.s }, svg);
+    var bx = x(b.from) + 1, bw = Math.max(x(b.to) - x(b.from) + PX_PER_DAY - 2, 6);
+    var by = laneY[b.lane] + 10, bh = LANE_H - 20;
+    el("rect", { x: bx, y: by, width: bw, height: bh, rx: 4, fill: colorOf[b.s] }, g);
+    // ラベル：棒の中に収まらなければ右に出す
+    var approx = b.label.length * 11.5 + 12;
+    if (approx <= bw) {
+      text(b.label, { x: bx + 6, y: by + bh / 2 + 4, "class": "bar-label", style: b.s === "ctx" ? "" : "fill:#0b0b0b" }, g);
+    } else {
+      text(b.label, { x: bx + bw + 6, y: by + bh / 2 + 4, "class": "bar-label" }, g);
+    }
+    var hit = el("rect", { x: bx - 2, y: laneY[b.lane] + 4, width: bw + 4, height: LANE_H - 8, "class": "hit" }, g);
+    bindTip(hit, b.label, fmt(b.from) + "〜" + fmt(b.to), b.desc, g);
+    marks.push(g);
+  });
+
+  // マイルストーン（ひし形）
+  var msY = laneY.ms + 18;
+  MILESTONES.forEach(function (mm, i) {
+    var g = el("g", { "class": "mark", "data-s": "ms" }, svg);
+    var cx = x(mm.date) + PX_PER_DAY / 2;
+    el("line", { x1: cx, x2: cx, y1: msY + 7, y2: H - 10, stroke: "var(--axis)", "stroke-width": 1, "stroke-dasharray": "2 3" }, g);
+    el("rect", {
+      x: cx - 6, y: msY - 6, width: 12, height: 12, rx: 1.5,
+      transform: "rotate(45 " + cx + " " + msY + ")",
+      fill: mm.tentative ? "var(--surface-1)" : "var(--text-primary)",
+      stroke: "var(--text-primary)", "stroke-width": 2, "stroke-dasharray": mm.tentative ? "3 2" : ""
+    }, g);
+    // M4 と M5 は近いので、ラベルを上下に振り分ける
+    var up = i % 2 === 0;
+    text(mm.id, { x: cx, y: up ? msY - 12 : msY + 22, "text-anchor": "middle", "class": "ms-label" }, g);
+    text(fmt(mm.date) + (mm.tentative ? "?" : ""), { x: cx, y: up ? msY + 22 : msY + 34, "text-anchor": "middle", "class": "ms-date" }, g);
+    var hit = el("rect", { x: cx - 14, y: msY - 24, width: 28, height: 60, "class": "hit" }, g);
+    bindTip(hit, mm.id + "　" + mm.name, fmt(mm.date) + (mm.tentative ? "（仮置き）" : ""), "つくるもの：" + mm.make, g);
+    marks.push(g);
+  });
+
+  // 今日
+  var tx = x(TODAY) + PX_PER_DAY / 2;
+  el("line", { x1: tx, x2: tx, y1: TOP - 6, y2: H - 10, stroke: "var(--today)", "stroke-width": 2 }, svg);
+  text("今日 " + fmt(TODAY), { x: tx + 4, y: 28, "class": "tick", style: "fill:var(--today)" }, svg);
+
+  // ---------- ツールチップ ----------
+  var tip = document.getElementById("tip");
+  function bindTip(target, title, date, body, group) {
+    target.addEventListener("mousemove", function (e) {
+      tip.innerHTML = "";
+      var b = document.createElement("b"); b.textContent = title; tip.appendChild(b);
+      var dd = document.createElement("div"); dd.className = "d"; dd.textContent = date; tip.appendChild(dd);
+      var p = document.createElement("div"); p.textContent = body; tip.appendChild(p);
+      tip.style.display = "block";
+      var tw = tip.offsetWidth, th = tip.offsetHeight;
+      var left = e.clientX + 14, top = e.clientY + 14;
+      if (left + tw > window.innerWidth - 8) left = e.clientX - tw - 14;
+      if (top + th > window.innerHeight - 8) top = e.clientY - th - 14;
+      tip.style.left = left + "px"; tip.style.top = top + "px";
+      svg.classList.add("dim"); group.classList.add("on");
+    });
+    target.addEventListener("mouseleave", function () {
+      tip.style.display = "none";
+      svg.classList.remove("dim"); group.classList.remove("on");
+    });
+  }
+
+  // ---------- 凡例 ----------
+  var legend = document.getElementById("legend");
+  function legendItem(cls, style, label) {
+    var s = document.createElement("span");
+    var sw = document.createElement("i"); sw.className = "sw " + cls; if (style) sw.style.background = style;
+    s.appendChild(sw); s.appendChild(document.createTextNode(label)); legend.appendChild(s);
+  }
+  legendItem("diamond", "", "マイルストーン");
+  SERIES.forEach(function (s) { legendItem("", s.color, s.name); });
+  legendItem("ctx", "", "本業・予定");
+  legendItem("today", "", "今日");
+
+  // ---------- 表 ----------
+  var table = document.getElementById("table");
+  var head = document.createElement("tr");
+  ["#", "期限", "マイルストーン", "つくるもの"].forEach(function (h) { var th = document.createElement("th"); th.textContent = h; head.appendChild(th); });
+  table.appendChild(head);
+  MILESTONES.forEach(function (mm) {
+    var tr = document.createElement("tr");
+    [[mm.id, ""], [fmt(mm.date) + (mm.tentative ? "（仮）" : ""), "num"], [mm.name, ""], [mm.make, ""]].forEach(function (c) {
+      var td = document.createElement("td"); td.textContent = c[0]; if (c[1]) td.className = c[1]; tr.appendChild(td);
+    });
+    table.appendChild(tr);
+  });
+})();
+</script>
+</body>
+</html>
