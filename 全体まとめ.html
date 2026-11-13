@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>移行作業 全体まとめ</title>
+<title>標準化移行作業の全体像 ― 令和9年度の切替に向けたフロー整理とツール化の計画</title>
 <style>
   .viz-root {
     color-scheme: light;
@@ -42,6 +42,7 @@
   }
   header { position: sticky; top: 0; z-index: 5; background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 24px; display: flex; gap: 20px; align-items: baseline; flex-wrap: wrap; }
   header h1 { font-size: 17px; margin: 0; }
+  header h1 .subtitle { font-size: 13px; font-weight: 400; color: var(--ink-2); }
   header nav { display: flex; gap: 14px; flex-wrap: wrap; }
   header nav a { color: var(--ink-2); text-decoration: none; }
   header nav a:hover { color: var(--ink); text-decoration: underline; }
@@ -143,7 +144,7 @@
 <body>
 <div class="viz-root">
 <header>
-  <h1>移行作業 全体まとめ</h1>
+  <h1>標準化移行作業の全体像 <span class="subtitle">― 令和9年度の切替に向けたフロー整理とツール化の計画</span></h1>
   <nav id="nav"></nav>
 </header>
 <main id="main"></main>
@@ -160,39 +161,39 @@
   // =====================================================================
 
   var GOAL = {
-    main: "令和9年度の山場を、人が減ったり替わったりしても回せる状態にする",
+    main: "令和9年度に集中する34団体の切替を、要員が減ったり入れ替わったりしても、品質を落とさずにやり遂げられる体制を整える。そのために作業を見える化してフローに整理し、フローをもとにしたツールで、特定の人に頼っている作業を減らす。",
     uses: [
-      ["新しい人が全体をつかめる", "来年度の作業者への展開資料"],
-      ["リーダーの割り振りの負担を減らす", "毎週、イベントをタスクに割るときの型"],
-      ["自動化の土台にする", "ツール化の設計書"]
+      ["新しく加わる人が全体像をつかめる", "来年度の作業者に展開する資料として使う。短い期間で、作業の流れと自分の受け持ちがわかるようにする。"],
+      ["リーダーの割り振りの負担を減らす", "毎週、イベントをタスクに分けるときの型として使う。誰がリーダーでも、同じ粒度で割り振れるようにする。"],
+      ["自動化の土台にする", "ツールを設計するときのもとにする。フローのどこを道具で置き換えるかを、ここから決める。"]
     ],
-    end: "終わりの定義：フローをもとにしたツールができ、そのツールが実運用に載ったら終わり"
+    end: "完了の条件：令和9年度の最初のリハーサルで、引き継いだ人がフローとツールを使って作業を回せたこと。ツールができた時点や、使い始めた時点では完了としない。"
   };
 
   var FRAME = [
     { name: "切替", state: "done", events: [
-      { id: "prep", name: "移行の準備", desc: "切替日に向けた準備と、手順・資産の随時の修正" },
-      { id: "run", name: "移行の実施", desc: "リハーサル・全体移行テスト・本番切替。当日は手順書どおり" },
-      { id: "verify", name: "移行結果の確認", desc: "自治体への報告資料のための前後比較。3段階" }
+      { id: "prep", name: "移行の準備", desc: "切替日から逆算して進める準備。あわせて、手順書・資産の随時の修正と、移行チームへの移管資産のリリースを行う" },
+      { id: "run", name: "移行の実施", desc: "リハーサル・全体移行テスト・本番切替。当日は手順書どおりに進め、エラーが出たときは原因と影響の説明までを受け持つ" },
+      { id: "verify", name: "移行結果の確認", desc: "自治体への報告資料を作るための、移行前後のデータ比較。事前の確認・本確認・最終確認の3段階で進める" }
     ] },
     { name: "バージョンアップ", state: "done", events: [
-      { id: "vupre", name: "稼働前のバージョンアップ", desc: "検証面・開発環境など。リーダーが日程を切って逆算" },
-      { id: "vupost", name: "稼働後のバージョンアップ", desc: "本番。受け入れ検証・稟議・市町村への作業申請が入る" }
+      { id: "vupre", name: "稼働前のバージョンアップ", desc: "検証面・開発環境などへの適用。リーダーが実施日を決め、そこから逆算して準備する" },
+      { id: "vupost", name: "稼働後のバージョンアップ", desc: "本番環境への適用。受け入れ検証・稟議・市町村への作業申請を経てから適用する" }
     ] },
     { name: "その他", state: "yet", events: [
-      { name: "総合テスト", desc: "業務システム全体の受け入れテスト。マスキングデータの取込を含む" },
-      { name: "標準化関連の随時依頼", desc: "センターのブリーフィングで発生する依頼" },
-      { name: "トラブル対応", desc: "AIの型（トラブルシュート）は決まった" }
+      { name: "総合テスト", desc: "業務システム全体の受け入れテスト。マスキングしたデータの取り込みを含む" },
+      { name: "標準化関連の随時依頼", desc: "センターのブリーフィングで発生する、標準化関連の依頼への対応" },
+      { name: "トラブル対応", desc: "イベントとしての整理はこれから。AIの使い方（トラブルシュートの型）は決まっている" }
     ] },
     { name: "窓口ソリューション", state: "yet", events: [
-      { name: "（後日ヒアリング）", desc: "8団体分のカスタマイズ・検証・導入" }
+      { name: "（内容は後日ヒアリング）", desc: "8団体分のカスタマイズ・検証・導入" }
     ] }
   ];
 
   var FRAME_NOTES = [
-    "イベントは「きっかけ」ではなく「準備か、実施か」で区切る",
-    "やることがほとんど同じものは1つにまとめ、違いだけを表にする",
-    "手順書・資産の直しはイベントにせず「随時の修正」で回す"
+    "イベントは、きっかけではなく「準備か、実施か」で区切る",
+    "やることがほぼ同じものは1つのイベントにまとめ、違いだけを表に示す",
+    "手順書・資産の直しはイベントにせず、「随時の修正」のルールで回す"
   ];
 
   var FLOWS = [
@@ -372,16 +373,16 @@
   }
 
   // 1. 目的
-  sec("goal", "目的", [h("div", { "class": "fig goal" }, [
+  sec("goal", "目的と完了の条件", [h("div", { "class": "fig goal" }, [
     h("div", { "class": "main" }, [h("b", { text: "目的" }), GOAL.main])
-  ].concat(GOAL.uses.map(function (u) { return h("div", null, [h("b", { text: u[0] }), h("span", { "class": "muted", text: "→ " + u[1] })]); }))
+  ].concat(GOAL.uses.map(function (u) { return h("div", null, [h("b", { text: u[0] }), h("span", { "class": "muted", text: u[1] })]); }))
    .concat([h("div", { "class": "end", text: GOAL.end })]))]);
 
   // 2. 枠組み
-  sec("frame", "全体の枠組み", [h("div", { "class": "fig" }, [
+  sec("frame", "イベントの枠組み", [h("div", { "class": "fig" }, [
     h("div", { "class": "frame" }, FRAME.map(function (f) {
       return h("div", { "class": "frame-col" }, [
-        h("h3", null, [f.name, h("span", { "class": "state " + f.state, text: f.state === "done" ? "枠組みは固まった" : "まだ" })])
+        h("h3", null, [f.name, h("span", { "class": "state " + f.state, text: f.state === "done" ? "枠組みは確定" : "未着手" })])
       ].concat(f.events.map(function (e) {
         var inner = [h("b", { text: e.name }), h("span", { text: e.desc })];
         return h("div", { "class": "ev" }, e.id ? [h("a", { href: "#flow-" + e.id }, inner)] : inner);
@@ -397,10 +398,10 @@
     s("defs", {}, svg).innerHTML = '<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--axis)"/></marker>';
     s("ellipse", { cx: cx, cy: cy, rx: rx, ry: ry, fill: "none", stroke: "var(--axis)", "stroke-width": 2, "stroke-dasharray": "4 4" }, svg);
     var nodes = [
-      { a: -90, t: ["移行の準備（切替日に向けて）", "数か月前：要員の割り当て", "2週間前：手順・資産の確定", "前日：事前作業"], c: "var(--s1-soft)" },
-      { a: 0, t: ["移行の実施", "当日：手順書どおり", "エラー：原因と影響を説明"], c: "var(--s2-soft)" },
-      { a: 90, t: ["振り返りと課題化", "実施後1週間くらい", "開発担当も入る"], c: "var(--s3-soft)" },
-      { a: 180, t: ["随時の修正", "課題を手順・資産に反映", "次の「確定」までに"], c: "var(--sunken)" }
+      { a: -90, t: ["移行の準備（切替日に向けて）", "数か月前：要員の概算の割り当て", "2週間前：手順・資産の確定", "前日：事前作業"], c: "var(--s1-soft)" },
+      { a: 0, t: ["移行の実施", "当日：手順書どおりに実施", "エラー時：原因と影響を説明"], c: "var(--s2-soft)" },
+      { a: 90, t: ["振り返りと課題化", "実施後1週間程度", "開発担当も参加"], c: "var(--s3-soft)" },
+      { a: 180, t: ["随時の修正", "課題を手順書・資産に反映", "締め切り：2週間前／前日"], c: "var(--sunken)" }
     ];
     // 矢印（ノードの間の弧）
     [[-90, 0], [0, 90], [90, 180], [180, 270]].forEach(function (p) {
@@ -416,19 +417,19 @@
         st(line, { x: x, y: y - hh / 2 + 20 + i * 16, "text-anchor": "middle", fill: i ? "var(--ink-2)" : "var(--ink)", "font-size": i ? 11 : 12, "font-weight": i ? 400 : 700 }, svg);
       });
     });
-    st("リハーサルを重ねるたびに、手順書が完成していく", { x: cx, y: cy + 4, "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }, svg);
+    st("リハーサルを重ねるごとに、手順書の完成度が上がる", { x: cx, y: cy + 4, "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }, svg);
     return svg;
   }
   var stageBox = h("div", null, [
-    h("div", { "class": "fig-title", text: "移行結果の確認は3段階（輪と並行して進む）" }),
+    h("div", { "class": "fig-title", text: "移行結果の確認は3段階で進める（切替の輪と並行）" }),
     h("div", { "class": "stage" }, [
-      h("div", null, [h("b", { text: "① 事前の確認" }), h("div", { text: "R8年度中・これまでの移行データ" }), h("div", { "class": "who", text: "自チーム" })]),
-      h("div", null, [h("b", { text: "② 本確認" }), h("div", { text: "R9年度・稼働直前のリハーサルデータ" }), h("div", { "class": "who", text: "自チーム" })]),
-      h("div", null, [h("b", { text: "③ 最終確認" }), h("div", { text: "本番切替時・観点の一部で最終報告" }), h("div", { "class": "who", text: "センター（自チームは支援）" })])
+      h("div", null, [h("b", { text: "① 事前の確認" }), h("div", { text: "R8年度中に、これまでの移行データで行う" }), h("div", { "class": "who", text: "自チーム" })]),
+      h("div", null, [h("b", { text: "② 本確認" }), h("div", { text: "R9年度の稼働前に、稼働直前のリハーサルデータで行う" }), h("div", { "class": "who", text: "自チーム" })]),
+      h("div", null, [h("b", { text: "③ 最終確認" }), h("div", { text: "本番切替時に、観点の一部で最終報告を行う" }), h("div", { "class": "who", text: "センター（自チームは支援）" })])
     ]),
-    h("div", { "class": "arrow-row", text: "①で理由のわかった差異を積み上げるほど → ②で人が調べる差異が減る" })
+    h("div", { "class": "arrow-row", text: "①で理由がわかった差異を積み上げておくほど、②で人が調べる差異が減る" })
   ]);
-  sec("loop", "切替の輪", [h("div", { "class": "fig loop-wrap" }, [h("div", null, [loopSvg()]), stageBox])]);
+  sec("loop", "切替の輪と移行結果の確認", [h("div", { "class": "fig loop-wrap" }, [h("div", null, [loopSvg()]), stageBox])]);
 
   // 4. フロー
   var legend = h("div", { "class": "legend" }, [
