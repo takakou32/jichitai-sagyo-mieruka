@@ -51,6 +51,7 @@
   .fig { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
   .fig + .fig { margin-top: 12px; }
   .fig-title { font-weight: 700; margin: 0 0 10px; }
+  .guide { font-weight: 400; font-size: 12px; margin-left: 12px; color: var(--s1); }
   .muted { color: var(--muted); }
   .todo { color: var(--todo); font-weight: 600; white-space: nowrap; }
 
@@ -153,7 +154,7 @@
   "use strict";
 
   // =====================================================================
-  // データ（下書きのフロー・マイルストーンから写したもの）
+  // データ（全体像はこの1枚だけで管理する）
   // who: 役割。own=自チーム、leader=現場リーダー等、outer=自チーム以外
   // ai: AIを使うところの目印  todo: 要確認
   // =====================================================================
@@ -170,9 +171,9 @@
 
   var FRAME = [
     { name: "切替", state: "done", events: [
-      { id: "prep", name: "移行の準備", desc: "切替日に向けた準備と、手順・資産の随時の修正" },
-      { id: "run", name: "移行の実施", desc: "リハーサル・全体移行テスト・本番切替。当日は手順書どおり" },
-      { id: "verify", name: "移行結果の確認", desc: "自治体への報告資料のための前後比較。3段階" }
+      { id: "prep", name: "移行の準備", guide: "各論/新人向け/説明_移行の準備.md", desc: "切替日に向けた準備と、手順・資産の随時の修正" },
+      { id: "run", name: "移行の実施", guide: "各論/新人向け/説明_移行の実施.md", desc: "リハーサル・全体移行テスト・本番切替。当日は手順書どおり" },
+      { id: "verify", name: "移行結果の確認", guide: "各論/新人向け/説明_移行結果の確認.md", desc: "自治体への報告資料のための前後比較。3段階" }
     ] },
     { name: "バージョンアップ", state: "done", events: [
       { id: "vupre", name: "稼働前のバージョンアップ", desc: "検証面・開発環境など。リーダーが日程を切って逆算" },
@@ -452,7 +453,8 @@
       if (p.rule) kids.push(h("div", { "class": "rule" }, [h("b", { text: p.rule.title }), h("ol", null, p.rule.items.map(function (i) { return h("li", { text: i }); }))]));
       return h("div", { "class": "phase" }, kids);
     }));
-    return h("div", { "class": "fig", id: "flow-" + f.id }, [h("div", { "class": "fig-title", text: f.name }), lead, cols]);
+    var title = h("div", { "class": "fig-title" }, [f.name, f.guide ? h("a", { href: f.guide, "class": "guide", text: "新人向けの説明（各論）→" }) : h("span", { "class": "guide muted", text: "新人向けの説明：未作成" })]);
+    return h("div", { "class": "fig", id: "flow-" + f.id }, [title, lead, cols]);
   }));
   sec("flows", "イベントごとのフロー", flowFigs);
 
