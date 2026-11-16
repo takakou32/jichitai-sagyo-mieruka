@@ -13,6 +13,11 @@
     --s1-soft: #e3eefb; --s2-soft: #fde9e0; --s3-soft: #def4ea;
     --todo: #c4302b; --today: #e34948; --band: rgba(137,135,129,0.10);
     --on-bar: #0b0b0b;
+    /* イベントの区分の色（切替・バージョンアップ・その他・窓口ソリューション） */
+    --g1: #7b5bd6; --g2: #b8860b; --g3: #898781; --g4: #d1478f;
+    --g1-soft: #ece7fb; --g2-soft: #f6ecd2; --g3-soft: #ecebe7; --g4-soft: #fbe3ef;
+    /* エラーが出たときの色（要確認の赤・自チーム以外のオレンジと見分ける） */
+    --err: #e8b400;
   }
   @media (prefers-color-scheme: dark) {
     :root:where(:not([data-theme="light"])) .viz-root {
@@ -22,6 +27,9 @@
       --s1: #3987e5; --s2: #d95926; --s3: #199e70;
       --s1-soft: #1c2a3d; --s2-soft: #3a2219; --s3-soft: #15302a;
       --todo: #e66767; --today: #e66767; --band: rgba(195,194,183,0.08);
+      --g1: #9a7ff0; --g2: #c9971f; --g3: #898781; --g4: #e0659f;
+      --g1-soft: #2a2340; --g2-soft: #33290f; --g3-soft: #262624; --g4-soft: #3a1f2d;
+      --err: #f0c419;
     }
   }
   :root[data-theme="dark"] .viz-root {
@@ -31,6 +39,9 @@
     --s1: #3987e5; --s2: #d95926; --s3: #199e70;
     --s1-soft: #1c2a3d; --s2-soft: #3a2219; --s3-soft: #15302a;
     --todo: #e66767; --today: #e66767; --band: rgba(195,194,183,0.08);
+    --g1: #9a7ff0; --g2: #c9971f; --g3: #898781; --g4: #e0659f;
+    --g1-soft: #2a2340; --g2-soft: #33290f; --g3-soft: #262624; --g4-soft: #3a1f2d;
+    --err: #f0c419;
   }
 
   * { box-sizing: border-box; }
@@ -75,6 +86,15 @@
   .ev span { color: var(--ink-2); font-size: 12px; }
   .ev a { color: inherit; text-decoration: none; }
   .ev a:hover b { text-decoration: underline; }
+  .g1 { --g: var(--g1); --g-soft: var(--g1-soft); }
+  .g2 { --g: var(--g2); --g-soft: var(--g2-soft); }
+  .g3 { --g: var(--g3); --g-soft: var(--g3-soft); }
+  .g4 { --g: var(--g4); --g-soft: var(--g4-soft); }
+  .frame-col.grouped { background: var(--g-soft); border-top: 4px solid var(--g); }
+  .group { background: var(--g-soft); border: 2px solid var(--g); border-radius: 12px; padding: 10px 12px 12px; }
+  .group + .group { margin-top: 16px; }
+  .group-h { display: inline-block; font-size: 12px; font-weight: 700; background: var(--surface); border: 1px solid var(--g); border-radius: 10px; padding: 0 10px; margin: 0 0 8px; }
+  .group .fig > .fig-title { font-size: 17px; line-height: 1.3; padding-left: 10px; border-left: 5px solid var(--g); }
   .frame-note { margin-top: 10px; display: flex; gap: 16px; flex-wrap: wrap; color: var(--ink-2); font-size: 12px; }
 
   /* 3. 切替の流れ */
@@ -93,7 +113,7 @@
   .step.own { border-left-color: var(--s1); }
   .step.leader { border-left-color: var(--s1); background: var(--s1-soft); }
   .step.outer { border-left-color: var(--s2); }
-  .step.err { border-left-color: var(--todo); }
+  .step.err { border-left-color: var(--err); }
   .step .no { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .step .t { font-weight: 700; display: block; }
   .step .when { font-size: 11px; color: var(--ink-2); }
@@ -107,7 +127,13 @@
   .chip { border-radius: 12px; padding: 2px 10px; font-size: 12px; background: var(--sunken); color: var(--ink-2); }
   .chip.key { background: var(--s2-soft); color: var(--ink); font-weight: 600; }
   .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--ink-2); margin-bottom: 10px; }
-  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 5px; }
+  /* 凡例の見本は、作業の枠（.step）と同じ見た目にする */
+  .legend i { display: inline-block; width: 20px; height: 13px; border: 1px solid var(--border); border-left: 4px solid var(--axis); border-radius: 3px; background: var(--surface); vertical-align: -2px; margin-right: 5px; }
+  .legend i.own { border-left-color: var(--s1); }
+  .legend i.leader { border-left-color: var(--s1); background: var(--s1-soft); }
+  .legend i.outer { border-left-color: var(--s2); }
+  .legend i.err { border-left-color: var(--err); }
+  .legend .ai-b { font-size: 10px; font-weight: 700; border-radius: 4px; padding: 0 5px; background: var(--s3); color: var(--on-bar); margin-right: 5px; }
 
   /* 5. AI */
   .ai-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
@@ -171,21 +197,21 @@
   };
 
   var FRAME = [
-    { name: "切替", state: "done", events: [
+    { name: "切替", g: "g1", state: "done", events: [
       { id: "prep", name: "移行の準備", desc: "切替日から逆算して進める準備。あわせて、手順書・資産の随時の修正と、移行チームへの移管資産のリリースを行う" },
       { id: "run", name: "移行の実施", desc: "リハーサル・全体移行テスト・本番切替。当日は手順書どおりに進め、エラーが出たときは原因と影響の説明までを受け持つ" },
       { id: "verify", name: "移行結果の確認", desc: "自治体への報告資料を作るための、移行前後のデータ比較。事前の確認・本確認・最終確認の3段階で進める" }
     ] },
-    { name: "バージョンアップ", state: "done", events: [
+    { name: "バージョンアップ", g: "g2", state: "done", events: [
       { id: "vupre", name: "稼働前のバージョンアップ", desc: "検証面・開発環境などへの適用。リーダーが実施日を決め、そこから逆算して準備する" },
       { id: "vupost", name: "稼働後のバージョンアップ", desc: "本番環境への適用。受け入れ検証・稟議・市町村への作業申請を経てから適用する" }
     ] },
-    { name: "その他", state: "yet", events: [
+    { name: "その他", g: "g3", state: "yet", events: [
       { name: "総合テスト", desc: "業務システム全体の受け入れテスト。マスキングしたデータの取り込みを含む" },
       { name: "標準化関連の随時依頼", desc: "センターのブリーフィングで発生する、標準化関連の依頼への対応" },
       { name: "トラブル対応", desc: "イベントとしての整理はこれから。AIの使い方（トラブルシュートの型）は決まっている" }
     ] },
-    { name: "窓口ソリューション", state: "yet", events: [
+    { name: "窓口ソリューション", g: "g4", state: "yet", events: [
       { name: "（内容は後日ヒアリング）", desc: "8団体分のカスタマイズ・検証・導入" }
     ] }
   ];
@@ -202,7 +228,7 @@
         cols: ["数か月前", "数週間前", "2週間前", "前日", "実施日"],
         rows: [
           { label: "A 切替日に向けて", items: [
-            { at: 0, t: "A1 要員の割り当て" }, { at: 1, t: "A3 要員の確定" }, { at: 2, t: "A2 手順書・資産の確定" }, { at: 3, t: "A4 事前作業" }, { at: 4, t: "実施", c: "run" }] },
+            { at: 0, t: "A1 要員の割り当て", c: "leader" }, { at: 1, t: "A3 要員の確定", c: "leader" }, { at: 2, t: "A2 手順書・資産の確定" }, { at: 3, t: "A4 事前作業" }, { at: 4, t: "実施", c: "run" }] },
           { label: "C 移管資産", items: [
             { from: 0, to: 1.4, t: "C1 取りまとめ（本来は随時）", c: "dash" }, { from: 1.4, to: 2, t: "C2 テスト" }, { at: 2, t: "C3 リリース" },
             { from: 2, to: 4, t: "移行チームが一度通して実行", c: "outer" }] },
@@ -237,7 +263,7 @@
           { no: "→", t: "判断（続行・切り戻し）", when: "", who: "センター（判断する人は未定）", c: "outer", done: "致命的なエラーかどうか、Go/No-Go、切り戻しの要否を判断する" }
         ] },
         { name: "事後", steps: [
-          { no: "4", t: "振り返りと課題化", when: "実施後1週間程度", who: "作業者・リーダー・開発担当", c: "own", done: "4つの観点（急ごしらえの作業、口頭で済ませた作業、エラーとその説明、所要時間）で課題を洗い出し、登録している。開発担当の都合がつかなければ、自チームだけで先に行う" },
+          { no: "4", t: "振り返りと課題化", when: "実施後1週間程度", who: "作業者・リーダー・開発担当", c: "own", done: "4つの観点（急ごしらえの作業、口頭で済ませた作業、エラーとその説明、予定より時間がかかった作業）で課題を洗い出し、各作業の所要時間とあわせて登録している。開発担当の都合がつかなければ、自チームだけで先に行う" },
           { no: "5", t: "最終確認の支援（本番のみ）", when: "本番切替の期間中", who: "作業者", c: "own", done: "支援の範囲は要確認", todo: true }
         ] }
       ] },
@@ -284,7 +310,7 @@
         cols: ["リリース通知", "8日前", "5日前", "本番適用日"],
         rows: [
           { label: "受け入れ検証", items: [{ from: 0, to: 1, t: "4 開発環境へ適用 → 5 テスト" }] },
-          { label: "承認", items: [{ at: 1, t: "6 開発管理台帳" }, { from: 1, to: 2, t: "7 稟議（2〜3日）", c: "outer", end: "申請の期限（規定）" }, { at: 2, t: "8 作業申請" }] },
+          { label: "承認", items: [{ at: 1, t: "6 開発管理台帳" }, { from: 1, to: 2, t: "7 稟議（2〜3日）", c: "outer", end: "申請の期限（規定）" }, { at: 2, t: "8 作業申請", c: "outer" }] },
           { label: "適用", items: [{ at: 3, t: "9 適用（閉庁後）", c: "run" }] }
         ] },
       lead: [["基準日", "本番適用日"]],
@@ -399,7 +425,7 @@
   // 2. 枠組み
   sec("frame", "イベントの枠組み", [h("div", { "class": "fig" }, [
     h("div", { "class": "frame" }, FRAME.map(function (f) {
-      return h("div", { "class": "frame-col" }, [
+      return h("div", { "class": "frame-col grouped " + f.g }, [
         h("h3", null, [f.name, h("span", { "class": "state " + f.state, text: f.state === "done" ? "枠組みは確定" : "未着手" })])
       ].concat(f.events.map(function (e) {
         var inner = [h("b", { text: e.name }), h("span", { text: e.desc })];
@@ -451,11 +477,11 @@
 
   // 4. フロー
   var legend = h("div", { "class": "legend" }, [
-    h("span", null, [h("i", { style: "background:var(--s1)" }), "自チーム（作業者）"]),
-    h("span", null, [h("i", { style: "background:var(--s1-soft);border:2px solid var(--s1)" }), "現場リーダー等・経験者"]),
-    h("span", null, [h("i", { style: "background:var(--s2)" }), "自チーム以外（センター・開発担当・開発元）"]),
-    h("span", null, [h("i", { style: "background:var(--todo)" }), "エラーが出たとき"]),
-    h("span", null, [h("i", { style: "background:var(--s3)" }), "AI：AIを使うところ"]),
+    h("span", null, [h("i", { "class": "own" }), "自チーム（作業者）"]),
+    h("span", null, [h("i", { "class": "leader" }), "リーダー・現場リーダー等・経験者"]),
+    h("span", null, [h("i", { "class": "outer" }), "自チーム以外（センター・開発担当・開発元・移行チーム）"]),
+    h("span", null, [h("i", { "class": "err" }), "エラーが出たとき"]),
+    h("span", null, [h("b", { "class": "ai-b", text: "AI" }), "AIを使うところ"]),
     h("span", null, [h("span", { "class": "todo", text: "要確認" }), "：まだ決まっていない"])
   ]);
   function timelineSvg(T) {
@@ -465,7 +491,7 @@
     var svg = s("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", style: "max-width:" + W + "px;display:block;margin-bottom:10px", role: "img", "aria-label": "基準日からの逆算" });
     T.cols.forEach(function (c, i) {
       var last = i === n;
-      s("line", { x1: X(i), x2: X(i), y1: TOP - 6, y2: H - 4, stroke: last ? "var(--today)" : "var(--grid)", "stroke-width": last ? 2 : 1, "stroke-dasharray": last ? "" : "3 3" }, svg);
+      s("line", { x1: X(i), x2: X(i), y1: TOP - 6, y2: H - 4, stroke: last ? "var(--ink)" : "var(--grid)", "stroke-width": last ? 2 : 1, "stroke-dasharray": last ? "" : "3 3" }, svg);
       st(c, { x: X(i), y: 14, "text-anchor": "middle", "class": "tick", "font-weight": last ? 700 : 400 }, svg);
     });
     T.rows.forEach(function (r, ri) {
@@ -473,24 +499,27 @@
       if (r.label) st(r.label, { x: 0, y: y + 4, "class": "lane-label" }, svg);
       r.items.filter(function (it) { return it.from != null; }).concat(r.items.filter(function (it) { return it.from == null; })).forEach(function (it) {
         if (it.from != null) {
-          var x1 = X(it.from) + 2, x2 = X(it.to) - 2, outer = it.c === "outer";
-          s("rect", { x: x1, y: y - 10, width: x2 - x1, height: 20, rx: 4,
-            fill: outer ? "var(--s2-soft)" : "var(--s1-soft)", stroke: outer ? "var(--s2)" : "var(--s1)",
+          // 帯は作業の枠と同じ見た目（白地＋左に役割の色の線）
+          var x1 = X(it.from) + 2, x2 = X(it.to) - 2, edge = it.c === "outer" ? "var(--s2)" : "var(--s1)";
+          s("rect", { x: x1, y: y - 10, width: x2 - x1, height: 20, rx: 4, fill: "var(--surface)", stroke: edge,
             "stroke-dasharray": it.c === "dash" ? "4 3" : "" }, svg);
+          s("rect", { x: x1, y: y - 10, width: 4, height: 20, fill: edge }, svg);
           st(it.t, { x: (x1 + x2) / 2, y: y + 4, "text-anchor": "middle", fill: "var(--ink)", "font-size": 11 }, svg);
           if (it.end) {
-            s("line", { x1: X(it.to), x2: X(it.to), y1: y - 16, y2: y + 16, stroke: "var(--todo)", "stroke-width": 3 }, svg);
-            st(it.end, { x: X(it.to) + 5, y: y - 8, fill: "var(--todo)", "font-size": 10, "font-weight": 700 }, svg);
+            s("line", { x1: X(it.to), x2: X(it.to), y1: y - 16, y2: y + 16, stroke: "var(--ink)", "stroke-width": 3 }, svg);
+            st(it.end, { x: X(it.to) + 5, y: y - 8, fill: "var(--ink)", "font-size": 10, "font-weight": 700 }, svg);
           }
         } else {
-          s("circle", { cx: X(it.at), cy: y, r: 6, stroke: "var(--surface)", "stroke-width": 2, fill: it.c === "run" ? "var(--today)" : "var(--s1)" }, svg);
+          // 点の色は役割に合わせる。実施は黒（赤はエラーと要確認だけに使う）
+          var dot = { run: "var(--ink)", leader: "var(--s1-soft)", outer: "var(--s2)" }[it.c] || "var(--s1)";
+          s("circle", { cx: X(it.at), cy: y, r: 6, stroke: it.c === "leader" ? "var(--s1)" : "var(--surface)", "stroke-width": 2, fill: dot }, svg);
           st(it.t, { x: X(it.at), y: y + 25, "text-anchor": "middle", fill: "var(--ink)", "font-size": 11, "font-weight": it.c === "run" ? 700 : 400 }, svg);
         }
       });
     });
     return svg;
   }
-  var flowFigs = [legend].concat(FLOWS.map(function (f) {
+  function flowFig(f) {
     var lead = h("div", { "class": "flow-lead" }, f.lead.map(function (l) {
       return h("span", { "class": "chip" + (l[0] === "key" ? " key" : "") }, [l[0] === "key" ? "" : l[0] + "：", l[1]]);
     }));
@@ -512,6 +541,11 @@
     var tl = f.timeline ? timelineSvg(f.timeline) : null;
     var title = h("div", { "class": "fig-title" }, [f.name, f.guide ? h("a", { href: f.guide, "class": "guide", text: "詳しい説明 →" }) : h("span", { "class": "guide muted", text: "詳しい説明：未作成" })]);
     return h("div", { "class": "fig", id: "flow-" + f.id }, [title, lead, tl, cols]);
+  }
+  // イベントの区分（FRAME）ごとに、区分の色の枠でくくる
+  var flowFigs = [legend].concat(FRAME.map(function (g) {
+    var figs = FLOWS.filter(function (f) { return g.events.some(function (e) { return e.id === f.id; }); }).map(flowFig);
+    return figs.length ? h("div", { "class": "group " + g.g }, [h("div", { "class": "group-h", text: g.name })].concat(figs)) : null;
   }));
   sec("flows", "イベントごとのフロー", flowFigs);
 
