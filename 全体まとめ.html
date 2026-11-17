@@ -120,6 +120,14 @@
   .step .who { font-size: 11px; display: inline-block; border-radius: 10px; padding: 0 6px; margin-top: 2px; border: 1px solid var(--axis); color: var(--ink-2); }
   .step .done { font-size: 12px; color: var(--ink-2); margin-top: 3px; }
   .step .ai { position: absolute; top: 6px; right: 6px; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 0 5px; background: var(--s3); color: var(--on-bar); }
+  .step .ai.cand { background: var(--surface); color: var(--ink); border: 1.5px solid var(--s3); padding: 0 4px; }
+  .step { cursor: pointer; }
+  .step:hover { outline: 1px dashed var(--s3); outline-offset: 1px; }
+  .step.ai-changed { outline: 2px dashed var(--s3); outline-offset: 1px; }
+  .step .ai-what { font-size: 12px; margin-top: 4px; padding-top: 3px; border-top: 1px dotted var(--s3); }
+  .ai-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 12px; color: var(--ink-2); margin: -4px 0 12px; }
+  .ai-bar button { font: inherit; font-size: 12px; padding: 1px 10px; border-radius: 6px; border: 1px solid var(--axis); background: var(--surface); color: var(--ink); cursor: pointer; }
+  .ai-out { flex-basis: 100%; font: inherit; font-size: 12px; padding: 6px 8px; border: 1px solid var(--axis); border-radius: 6px; background: var(--surface); color: var(--ink); }
   .step + .step::before { content: "↓"; position: absolute; top: -13px; left: 10px; color: var(--muted); font-size: 11px; }
   .rule { background: var(--surface); border: 1px dashed var(--axis); border-radius: 6px; padding: 6px 8px; font-size: 12px; }
   .rule ol, .rule ul { margin: 2px 0 0; padding-left: 18px; }
@@ -134,6 +142,7 @@
   .legend i.outer { border-left-color: var(--s2); }
   .legend i.err { border-left-color: var(--err); }
   .legend .ai-b { font-size: 10px; font-weight: 700; border-radius: 4px; padding: 0 5px; background: var(--s3); color: var(--on-bar); margin-right: 5px; }
+  .legend .ai-b.cand { background: var(--surface); color: var(--ink); border: 1.5px solid var(--s3); padding: 0 4px; }
 
   /* 5. AI */
   .ai-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
@@ -142,6 +151,7 @@
   .lv.fixed { background: var(--s3); color: var(--on-bar); }
   .lv.strong { background: var(--s1); color: var(--on-bar); }
   .lv.cand { background: var(--surface); border: 1px solid var(--axis); color: var(--ink-2); }
+  .lv.aicand { background: var(--surface); border: 1.5px solid var(--s3); color: var(--ink); }
   .ai-card b { display: block; }
   .ai-card .where { font-size: 11px; color: var(--muted); }
   .ai-card .what { font-size: 12px; color: var(--ink-2); }
@@ -164,7 +174,7 @@
     .goal, .frame, .ai-grid, .open { grid-template-columns: 1fr 1fr; }
     .loop-wrap { grid-template-columns: 1fr; }
   }
-  @media print { header { position: static; } .flow { grid-auto-flow: row; } }
+  @media print { header { position: static; } .flow { grid-auto-flow: row; } .ai-bar { display: none; } .step.ai-changed { outline: none; } }
 </style>
 </head>
 <body>
@@ -183,7 +193,7 @@
   // =====================================================================
   // データ（全体像はこの1枚だけで管理する）
   // who: 役割。own=自チーム、leader=現場リーダー等、outer=自チーム以外
-  // ai: AIを使うところの目印  todo: 要確認
+  // ai: AIを使うところ（fixed=決定、cand=案）  aiWhat: AIに何をさせるか  todo: 要確認
   // =====================================================================
 
   var GOAL = {
@@ -239,7 +249,7 @@
       phases: [
         { name: "A. 切替日に向けて", steps: [
           { no: "A1", t: "要員の概算の割り当て", when: "数か月前", who: "リーダー", c: "leader", done: "団体ごとに、担当者の見込みが立っている" },
-          { no: "A2", t: "手順書・資産の確定", when: "2週間前まで（C3 に合わせる）", who: "作業者（確認の観点はリーダーが伝える）", c: "own", done: "前回の課題を反映し、今回の団体向けの手順書・資産が確定している" },
+          { no: "A2", t: "手順書・資産の確定", when: "2週間前まで（C3 に合わせる）", who: "作業者（確認の観点はリーダーが伝える）", c: "own", done: "前回の課題を反映し、今回の団体向けの手順書・資産が確定している", ai: "cand", aiWhat: "前回の課題と団体ごとの差分の反映もれを点検させる" },
           { no: "A3", t: "要員の確定", when: "数週間前", who: "リーダー", c: "leader", done: "当日の要員・連絡先・現場リーダー等が決まっている" },
           { no: "A4", t: "事前作業（初期化・資産の格納・手順書の印刷）", when: "前日", who: "作業者", c: "own", done: "事前作業の手順がすべて済んでいる" }
         ] },
@@ -259,7 +269,7 @@
         ] },
         { name: "エラーが出たとき", steps: [
           { no: "E1", t: "作業を止め、事実を報告する", when: "発生したらすぐ", who: "作業者", c: "err", done: "いつ・どこで・何が起きたか、どこまで進んでいたか、何をしたか、今どういう状態かを確認者に伝えている。ログは退避してある" },
-          { no: "E2", t: "原因と影響を説明する", when: "E1 のあとすぐ", who: "現場リーダー等", c: "leader", done: "原因と、作業の続行への影響を確認者に説明している", ai: true },
+          { no: "E2", t: "原因と影響を説明する", when: "E1 のあとすぐ", who: "現場リーダー等", c: "leader", done: "原因と、作業の続行への影響を確認者に説明している", ai: "fixed", aiWhat: "事象の説明・ログ・ソース・トラブル一覧を渡して見立てさせる。材料が足りなければ突き返させる" },
           { no: "→", t: "判断（続行・切り戻し）", when: "", who: "センター（判断する人は未定）", c: "outer", done: "致命的なエラーかどうか、Go/No-Go、切り戻しの要否を判断する" }
         ] },
         { name: "事後", steps: [
@@ -276,13 +286,13 @@
           { no: "3", t: "差異の仕分け", who: "作業者", c: "own", done: "差異を「理由のわかっている差異」と「新しい差異」に分けている" }
         ] },
         { name: "調べる", steps: [
-          { no: "4", t: "新しい差異の分析・原因調査", who: "リーダー", c: "leader", done: "原因と、業務への影響の説明が付いている" },
-          { no: "5", t: "業務知識の収集", who: "リーダー", c: "leader", done: "4の判断に必要な情報が得られている。簡単なことは開発担当に、現状の実運用の確認は業務担当に聞く" }
+          { no: "4", t: "新しい差異の分析・原因調査", who: "リーダー", c: "leader", done: "原因と、業務への影響の説明が付いている", ai: "cand", aiWhat: "材料を渡して原因を見立てさせる（エラーのときと同じ形）" },
+          { no: "5", t: "業務知識の収集", who: "リーダー", c: "leader", done: "4の判断に必要な情報が得られている。簡単なことは開発担当に、現状の実運用の確認は業務担当に聞く", ai: "cand", aiWhat: "標準仕様書などを読ませて、業務のルールを説明させる（聞く前の下調べ）" }
         ] },
         { name: "まとめる", steps: [
-          { no: "6", t: "報告資料の作成", who: "作業者", c: "own", done: "確認観点ごとに、結果と差異の説明がまとまっている" },
+          { no: "6", t: "移行結果報告資料の作成", who: "作業者", c: "own", done: "確認観点ごとに、結果と差異の説明がまとまっている", ai: "cand", aiWhat: "結果を決まった書式の文章に下書きさせる" },
           { no: "7", t: "理由のわかっている差異の一覧の更新", who: "作業者", c: "own", done: "4で理由がわかった差異が、一覧に追加されている" },
-          { no: "8", t: "報告資料をセンターに渡す", who: "リーダー", c: "leader", done: "センターに渡している。センターが取りまとめて自治体に提出するが、ほぼそのまま渡ることが多い" }
+          { no: "8", t: "移行結果報告資料をセンターに渡す", who: "リーダー", c: "leader", done: "センターに渡している。センターが取りまとめて自治体に提出するが、ほぼそのまま渡ることが多い" }
         ] }
       ] },
     { id: "vupre", name: "稼働前のバージョンアップ",
@@ -297,7 +307,7 @@
         ] },
         { name: "実施", steps: [
           { no: "6", t: "手順書どおりにデプロイ", when: "実施日", who: "作業者", c: "own", done: "手順書の最後まで実施している" },
-          { no: "E", t: "エラーが出たとき", when: "", who: "作業者 → 現場リーダー等", c: "err", done: "作業を止めて事実を報告し、原因と影響を判断する（移行の実施と同じ）", ai: true }
+          { no: "E", t: "エラーが出たとき", when: "", who: "作業者 → 現場リーダー等", c: "err", done: "作業を止めて事実を報告し、原因と影響を判断する（移行の実施と同じ）", ai: "fixed", aiWhat: "移行の実施の E2 と同じ" }
         ] },
         { name: "事後", steps: [
           { no: "7", t: "確認", when: "実施日", who: "作業者", c: "own", done: "手順書の確認項目がすべて済んでいる" },
@@ -322,12 +332,12 @@
         ] },
         { name: "受け入れ検証", steps: [
           { no: "4", t: "開発環境のバージョンアップ", who: "作業者", c: "own", done: "稼働前のバージョンアップと同じ流れで、適用が済んでいる" },
-          { no: "5a", t: "テストケースへの展開", who: "作業者", c: "own", done: "テスト観点の一覧を、MS Copilot でテストケースに展開している", ai: true },
+          { no: "5a", t: "テストケースへの展開", who: "作業者", c: "own", done: "テスト観点の一覧を、MS Copilot でテストケースに展開している", ai: "fixed", aiWhat: "テスト観点の一覧からテストケースを作らせる。要否は人が判断する" },
           { no: "5b", t: "テストケースの要否判断・追加", who: "経験者", c: "leader", done: "要否を判断し、足りないテストケースを追加している" },
           { no: "5c", t: "テストの実施・エビデンスの取得", who: "作業者（未経験でも可）", c: "own", done: "テストが済み、エビデンスがそろっている" }
         ] },
         { name: "承認", steps: [
-          { no: "6", t: "開発管理台帳の作成", when: "8日前程度まで", who: "作業者（書式を押さえれば可）", c: "own", done: "検証結果をまとめた台帳ができている" },
+          { no: "6", t: "開発管理台帳の作成", when: "8日前程度まで", who: "作業者（書式を押さえれば可）", c: "own", done: "検証結果をまとめた台帳ができている", ai: "cand", aiWhat: "検証結果を台帳の書式に下書きさせる" },
           { no: "7", t: "稟議", when: "6 のあと（2〜3日かかる）", who: "開発担当", c: "outer", done: "承認を得ている" },
           { no: "8", t: "市町村への作業申請", when: "5日前まで（規定）", who: "開発担当", c: "outer", done: "作業申請が済んでいる" }
         ] },
@@ -340,14 +350,7 @@
       ] }
   ];
 
-  var AI_POINTS = [
-    { lv: "fixed", lvName: "決まった", t: "エラーの原因と影響の見立て", where: "移行の実施・バージョンアップ／エラーが出たとき", what: "事象の説明・ログ・ソース・トラブル一覧を渡す。材料が足りなければ必ず突き返させる" },
-    { lv: "strong", lvName: "案（有力）", t: "新しい差異の分析・原因調査", where: "移行結果の確認／4", what: "トラブルシュートとほぼ同じ形。R9年度の稼働直前の移行結果報告資料で、一番重くなるところ" },
-    { lv: "strong", lvName: "案（有力）", t: "業務知識の収集", where: "移行結果の確認／5", what: "標準仕様書などを読ませて、業務のルールを説明させる" },
-    { lv: "fixed", lvName: "決まった（各論は後で）", t: "テストケースへの展開", where: "稼働後のバージョンアップ／5a", what: "テスト観点の一覧からテストケースを作る。要否は人が判断" },
-    { lv: "cand", lvName: "案", t: "報告資料・開発管理台帳の下書き", where: "移行結果の確認／6、稼働後のバージョンアップ／6", what: "結果を決まった書式の文章に整える" },
-    { lv: "cand", lvName: "案", t: "手順書の反映もれの点検", where: "移行の準備／A2", what: "前回の課題と団体ごとの差分が反映されているかを点検する" }
-  ];
+  // AIを使うところは、FLOWS の各作業の ai（fixed=決定、cand=案）と aiWhat で管理する
   var NO_AI = "AIを使わないところ：当日の作業（手順書どおり）、要員の割り当て、日程の周知、資産のとりまとめ、振り返り";
 
   var MS = {
@@ -481,7 +484,8 @@
     h("span", null, [h("i", { "class": "leader" }), "リーダー・現場リーダー等・経験者"]),
     h("span", null, [h("i", { "class": "outer" }), "自チーム以外（センター・開発担当・開発元・移行チーム）"]),
     h("span", null, [h("i", { "class": "err" }), "エラーが出たとき"]),
-    h("span", null, [h("b", { "class": "ai-b", text: "AI" }), "AIを使うところ"]),
+    h("span", null, [h("b", { "class": "ai-b", text: "AI" }), "AIを使うところ（決定）"]),
+    h("span", null, [h("b", { "class": "ai-b cand", text: "AI案" }), "AIを使うところ（検討中）"]),
     h("span", null, [h("span", { "class": "todo", text: "要確認" }), "：まだ決まっていない"])
   ]);
   function timelineSvg(T) {
@@ -519,6 +523,40 @@
     });
     return svg;
   }
+  // ---- AIの印の切り替え（画面上で試す。結果はこのブラウザにだけ保存し、ファイルは書き換えない）
+  var AI_KEY = "matome-ai-v1", AI_NEXT = { "": "cand", cand: "fixed", fixed: "" }, AI_NAME = { "": "なし", cand: "AI案", fixed: "AI" };
+  var aiOverride = {};
+  try { aiOverride = JSON.parse(localStorage.getItem(AI_KEY) || "{}"); } catch (e) { aiOverride = {}; }
+  function aiSave() { try { localStorage.setItem(AI_KEY, JSON.stringify(aiOverride)); } catch (e) {} }
+  function aiKey(f, x) { return f.id + "/" + x.no; }
+  function aiOf(f, x) { var k = aiKey(f, x); return k in aiOverride ? aiOverride[k] : (x.ai || ""); }
+  function aiChanges() {
+    var list = [];
+    FLOWS.forEach(function (f) { f.phases.forEach(function (p) { p.steps.forEach(function (x) {
+      var now = aiOf(f, x), base = x.ai || "";
+      if (now !== base) list.push(f.name + "／" + x.no + " " + x.t + "：" + AI_NAME[base] + " → " + AI_NAME[now]);
+    }); }); });
+    return list;
+  }
+  function aiToggle(f, x) {
+    var next = AI_NEXT[aiOf(f, x)];
+    if (next === (x.ai || "")) delete aiOverride[aiKey(f, x)]; else aiOverride[aiKey(f, x)] = next;
+    aiSave(); drawFlows(); drawAi();
+  }
+  function aiBar() {
+    var list = aiChanges(), out = h("textarea", { "class": "ai-out", readonly: "readonly", rows: Math.max(list.length, 2) });
+    out.value = list.join("\n");
+    out.style.display = "none";
+    var btnOut = h("button", { type: "button", text: "書き出す" }), btnReset = h("button", { type: "button", text: "元に戻す" });
+    btnOut.onclick = function () { out.style.display = ""; out.focus(); out.select(); };
+    btnReset.onclick = function () { aiOverride = {}; aiSave(); drawFlows(); drawAi(); };
+    return h("div", { "class": "ai-bar" }, [
+      h("span", { text: "作業の枠をクリックすると、AIの印が「なし → AI案 → AI → なし」と切り替わる。" }),
+      list.length ? h("b", { text: "変更 " + list.length + "件" }) : h("span", { "class": "muted", text: "変更なし" }),
+      list.length ? btnOut : null, list.length ? btnReset : null, out
+    ]);
+  }
+
   function flowFig(f) {
     var lead = h("div", { "class": "flow-lead" }, f.lead.map(function (l) {
       return h("span", { "class": "chip" + (l[0] === "key" ? " key" : "") }, [l[0] === "key" ? "" : l[0] + "：", l[1]]);
@@ -526,14 +564,18 @@
     var cols = h("div", { "class": "flow" }, f.phases.map(function (p) {
       var kids = [h("div", { "class": "phase-h" }, [p.name])];
       p.steps.forEach(function (x) {
-        kids.push(h("div", { "class": "step " + x.c }, [
-          x.ai ? h("span", { "class": "ai", text: "AI" }) : null,
+        var ai = aiOf(f, x), changed = ai !== (x.ai || "");
+        var card = h("div", { "class": "step " + x.c + (changed ? " ai-changed" : ""), title: "クリックで AI の印を切り替え" }, [
+          ai ? h("span", { "class": "ai " + ai, text: AI_NAME[ai] }) : null,
           h("span", { "class": "no", text: x.no }),
           h("span", { "class": "t", text: x.t }),
           x.when ? h("div", { "class": "when", text: "いつ：" + x.when }) : null,
           h("span", { "class": "who", text: x.who }),
-          h("div", { "class": "done" }, ["完了：" + x.done, x.todo ? h("span", { "class": "todo", text: " 要確認" }) : null])
-        ]));
+          h("div", { "class": "done" }, ["完了：" + x.done, x.todo ? h("span", { "class": "todo", text: " 要確認" }) : null]),
+          ai ? h("div", { "class": "ai-what" }, [h("b", { text: "AI：" }), x.aiWhat || "（何をさせるかは未定）"]) : null
+        ]);
+        card.onclick = function () { aiToggle(f, x); };
+        kids.push(card);
       });
       if (p.rule) kids.push(h("div", { "class": "rule" }, [h("b", { text: p.rule.title }), h("ol", null, p.rule.items.map(function (i) { return h("li", { text: i }); }))]));
       return h("div", { "class": "phase" }, kids);
@@ -543,20 +585,37 @@
     return h("div", { "class": "fig", id: "flow-" + f.id }, [title, lead, tl, cols]);
   }
   // イベントの区分（FRAME）ごとに、区分の色の枠でくくる
-  var flowFigs = [legend].concat(FRAME.map(function (g) {
-    var figs = FLOWS.filter(function (f) { return g.events.some(function (e) { return e.id === f.id; }); }).map(flowFig);
-    return figs.length ? h("div", { "class": "group " + g.g }, [h("div", { "class": "group-h", text: g.name })].concat(figs)) : null;
-  }));
-  sec("flows", "イベントごとのフロー", flowFigs);
+  function fill(box, kids) { while (box.firstChild) box.removeChild(box.firstChild); kids.forEach(function (k) { if (k) box.appendChild(k); }); }
+  var flowsBox = h("div");
+  function drawFlows() {
+    var y = window.scrollY;
+    fill(flowsBox, [legend, aiBar()].concat(FRAME.map(function (g) {
+      var figs = FLOWS.filter(function (f) { return g.events.some(function (e) { return e.id === f.id; }); }).map(flowFig);
+      return figs.length ? h("div", { "class": "group " + g.g }, [h("div", { "class": "group-h", text: g.name })].concat(figs)) : null;
+    })));
+    try { window.scrollTo(0, y); } catch (e) {}
+  }
+  sec("flows", "イベントごとのフロー", [flowsBox]);
 
-  // 5. AI
-  sec("ai", "AIを使うところ（決まったものと案）", [h("div", { "class": "fig" }, [
-    h("div", { "class": "ai-grid" }, AI_POINTS.map(function (a) {
-      return h("div", { "class": "ai-card" }, [h("span", { "class": "lv " + a.lv, text: a.lvName }), h("b", { text: a.t }), h("div", { "class": "where", text: a.where }), h("div", { "class": "what", text: a.what })]);
-    })),
-    h("div", { "class": "no-ai", text: "フローの「AI」の印は、決まったところにだけ付けている。案はまだ決めていない。" }),
-    h("div", { "class": "no-ai", text: NO_AI + "（案）" })
-  ])]);
+  // 5. AI（フローの印から一覧を作る）
+  var aiBox = h("div", { "class": "fig" });
+  function drawAi() {
+    var cards = [];
+    ["fixed", "cand"].forEach(function (lv) {
+      FLOWS.forEach(function (f) { f.phases.forEach(function (p) { p.steps.forEach(function (x) {
+        if (aiOf(f, x) !== lv) return;
+        cards.push(h("div", { "class": "ai-card" }, [h("span", { "class": "lv " + (lv === "fixed" ? "fixed" : "aicand"), text: lv === "fixed" ? "決まった" : "案" }),
+          h("b", { text: x.t }), h("div", { "class": "where", text: f.name + "／" + x.no }), h("div", { "class": "what", text: x.aiWhat || "（何をさせるかは未定）" })]));
+      }); }); });
+    });
+    fill(aiBox, [
+      cards.length ? h("div", { "class": "ai-grid" }, cards) : h("div", { "class": "muted", text: "AIの印の付いた作業はない" }),
+      h("div", { "class": "no-ai", text: "この一覧は、フローの「AI」「AI案」の印から作っている。印はフローの作業の枠をクリックして切り替える。" }),
+      h("div", { "class": "no-ai", text: NO_AI + "（案）" })
+    ]);
+  }
+  sec("ai", "AIを使うところ（決まったものと案）", [aiBox]);
+  drawFlows(); drawAi();
 
   // 6. ツールの候補
   sec("tools", "ツールの候補（M2で決める）", [h("div", { "class": "fig" }, [
