@@ -125,6 +125,7 @@
   .step:hover { outline: 1px dashed var(--s3); outline-offset: 1px; }
   .step.ai-changed { outline: 2px dashed var(--s3); outline-offset: 1px; }
   .step .ai-what { font-size: 12px; margin-top: 4px; padding-top: 3px; border-top: 1px dotted var(--s3); }
+  .ai-guide { display: inline-block; margin-left: 6px; font-size: 11px; color: var(--s1); }
   .ai-review { font-size: 11px; margin-top: 3px; color: var(--ink-2); }
   .ai-review .v { font-weight: 700; border-radius: 8px; padding: 0 6px; margin-right: 4px; border: 1px solid var(--s3); color: var(--ink); }
   .ai-review.ask .v { border-color: var(--todo); color: var(--todo); }
@@ -196,7 +197,7 @@
   // =====================================================================
   // データ（全体像はこの1枚だけで管理する）
   // who: 役割。own=自チーム、leader=現場リーダー等、outer=自チーム以外
-  // ai: AIを使うところ（fixed=決定、cand=案）  aiWhat: AIに何をさせるか  aiReview: 案の見立て（keep=残す、ask=要相談）  todo: 要確認
+  // ai: AIを使うところ（fixed=決定、cand=案）  aiWhat: AIに何をさせるか  aiGuide: 詳しい使い方の型（AIの使い方の型.md）  aiReview: 案の見立て（keep=残す、ask=要相談）  todo: 要確認
   // =====================================================================
 
   var GOAL = {
@@ -252,7 +253,7 @@
       phases: [
         { name: "A. 切替日に向けて", steps: [
           { no: "A1", t: "要員の概算の割り当て", when: "数か月前", who: "リーダー", c: "leader", done: "団体ごとに、担当者の見込みが立っている" },
-          { no: "A2", t: "手順書・資産の確定", when: "2週間前まで（C3 に合わせる）", who: "作業者（確認の観点はリーダーが伝える）", c: "own", done: "前回の課題を反映し、今回の団体向けの手順書・資産が確定している", ai: "cand", aiWhat: "前回の課題・団体ごとの差分・手順書を添付し、どこに反映したかの対応表を返させる。見つからないものは未反映とさせる", aiReview: { v: "keep", why: "前回の課題・団体ごとの差分・手順書を渡せば、それだけで点検できる" } },
+          { no: "A2", t: "手順書・資産の確定", when: "2週間前まで（C3 に合わせる）", who: "作業者（確認の観点はリーダーが伝える）", c: "own", done: "前回の課題を反映し、今回の団体向けの手順書・資産が確定している", ai: "cand", aiGuide: "E", aiWhat: "前回の課題・団体ごとの差分・手順書を添付し、どこに反映したかの対応表を返させる。見つからないものは未反映とさせる", aiReview: { v: "keep", why: "前回の課題・団体ごとの差分・手順書を渡せば、それだけで点検できる" } },
           { no: "A3", t: "要員の確定", when: "数週間前", who: "リーダー", c: "leader", done: "当日の要員・連絡先・現場リーダー等が決まっている" },
           { no: "A4", t: "事前作業（初期化・資産の格納・手順書の印刷）", when: "前日", who: "作業者", c: "own", done: "事前作業の手順がすべて済んでいる" }
         ] },
@@ -563,6 +564,14 @@
 
   // AI案の見立て（残す／要相談）と理由
   function aiReviewEl(r) { return h("div", { "class": "ai-review " + r.v }, [h("span", { "class": "v", text: r.v === "ask" ? "要相談" : "残す" }), r.why]); }
+  // 詳しい使い方（AIの使い方の型）へのリンク。作業の枠のクリック（印の切り替え）には伝えない
+  var AI_GUIDE_FILE = "AI活用/AIの使い方の型.md";
+  function aiGuideEl(x) {
+    if (!x.aiGuide) return null;
+    var a = h("a", { href: AI_GUIDE_FILE, "class": "ai-guide", text: "詳しい使い方（型" + x.aiGuide + "） →" });
+    a.onclick = function (e) { e.stopPropagation(); };
+    return a;
+  }
   function flowFig(f) {
     var lead = h("div", { "class": "flow-lead" }, f.lead.map(function (l) {
       return h("span", { "class": "chip" + (l[0] === "key" ? " key" : "") }, [l[0] === "key" ? "" : l[0] + "：", l[1]]);
@@ -578,7 +587,7 @@
           x.when ? h("div", { "class": "when", text: "いつ：" + x.when }) : null,
           h("span", { "class": "who", text: x.who }),
           h("div", { "class": "done" }, ["完了：" + x.done, x.todo ? h("span", { "class": "todo", text: " 要確認" }) : null]),
-          ai ? h("div", { "class": "ai-what" }, [h("b", { text: "AI：" }), x.aiWhat || "（何をさせるかは未定）"]) : null,
+          ai ? h("div", { "class": "ai-what" }, [h("b", { text: "AI：" }), x.aiWhat || "（何をさせるかは未定）", aiGuideEl(x)]) : null,
           ai === "cand" && x.aiReview ? aiReviewEl(x.aiReview) : null
         ]);
         card.onclick = function () { aiToggle(f, x); };
@@ -612,7 +621,7 @@
       FLOWS.forEach(function (f) { f.phases.forEach(function (p) { p.steps.forEach(function (x) {
         if (aiOf(f, x) !== lv) return;
         cards.push(h("div", { "class": "ai-card" }, [h("span", { "class": "lv " + (lv === "fixed" ? "fixed" : "aicand"), text: lv === "fixed" ? "決まった" : "案" }),
-          h("b", { text: x.t }), h("div", { "class": "where", text: f.name + "／" + x.no }), h("div", { "class": "what", text: x.aiWhat || "（何をさせるかは未定）" }), lv === "cand" && x.aiReview ? aiReviewEl(x.aiReview) : null]));
+          h("b", { text: x.t }), h("div", { "class": "where", text: f.name + "／" + x.no }), h("div", { "class": "what" }, [x.aiWhat || "（何をさせるかは未定）", aiGuideEl(x)]), lv === "cand" && x.aiReview ? aiReviewEl(x.aiReview) : null]));
       }); }); });
     });
     fill(aiBox, [
