@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>AIの使い方 ― 移行の準備</title>
+<link rel="stylesheet" href="ai.css">
+</head>
+<body>
+<div class="viz-root">
+<header>
+  <h1>AIの使い方 <span class="subtitle">― 移行の準備</span></h1>
+  <nav>
+    <a href="#prep-A2">A2 手順書・資産の確定</a>
+    <a href="AIの使い方_共通.html">共通の型 →</a>
+    <a href="../全体まとめ.html#ai">全体まとめ →</a>
+  </nav>
+</header>
+<main>
+<p class="lead">使う前に、<a href="AIの使い方_共通.html">共通の型</a>（共通の前置き・渡してよいデータ・記録）を読んでおく。依頼文は、共通の前置きのあとに貼る。</p>
+<h2 id="prep-A2" class="use">移行の準備 A2 手順書・資産の確定 ― 反映もれの点検</h2>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>中身</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>入力</td>
+<td>前回の課題一覧（ボードから書き出したもの）、団体ごとの差分の一覧、更新した手順書（Word）。個人情報は含まれないので、そのまま添付してよい</td>
+</tr>
+<tr>
+<td>指示</td>
+<td>下の「依頼」</td>
+</tr>
+<tr>
+<td>出力の形</td>
+<td>課題・差分1件ごとに1行の表</td>
+</tr>
+<tr>
+<td>人の確認</td>
+<td>「未反映」「判断できない」の行を、手順書で確かめる</td>
+</tr>
+<tr>
+<td>記録</td>
+<td>共通の記録。未反映を直したら、ボードの課題を更新する</td>
+</tr>
+</tbody></table>
+<h3>Copilot Chat での進め方</h3>
+<ol>
+<li>Copilot Chat で新しいチャットを開く。</li>
+<li>共通の前置きと、下の依頼文を貼る。</li>
+<li>3つのファイルを添付して送る。手順書が長いときは、章ごとに分けて頼む（長いと読み落としが出やすいため）。</li>
+<li>返ってきた表を Excel に貼り、「未反映」「判断できない」の行だけを手順書で確かめる。</li>
+</ol>
+<h3>依頼（v0.1）</h3>
+<div class="code"><button type="button" class="copy">コピー</button><pre><code>添付の「前回の課題一覧」と「団体ごとの差分の一覧」の内容が、添付の手順書に反映されているかを点検してください。
+- 課題・差分を1件ずつ、手順書のどの章・手順番号に反映されているかを示してください。
+- 手順書の該当する文を、短く引用してください。
+- 見つからないもの、反映されているか判断できないものは「未反映」「判断できない」としてください。推測で「反映済み」にしないでください。
+- 最後に、未反映と判断できないものの件数を書いてください。
+</code></pre></div>
+<h3>出力の形</h3>
+<div class="code"><button type="button" class="copy">コピー</button><pre><code>| No | 課題・差分（要約） | 出どころ（課題一覧／差分一覧） | 判定（反映済み／未反映／判断できない） | 手順書の箇所 | 引用 |
+</code></pre></div>
+<h3>確認</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>確かめること</th>
+<th>誰</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>「未反映」「判断できない」の行を、手順書で確かめる。本当に漏れていれば直す</td>
+<td>作業者</td>
+</tr>
+<tr>
+<td>2</td>
+<td>「反映済み」の行は、引用が課題の意図と合っているかを数件だけ抜き取りで見る</td>
+<td>作業者</td>
+</tr>
+<tr>
+<td>3</td>
+<td>直しきれないもの、判断に迷うものは、確定の前にリーダーに上げる</td>
+<td>作業者</td>
+</tr>
+</tbody></table>
+</main>
+</div>
+<script src="ai.js"></script>
+</body>
+</html>

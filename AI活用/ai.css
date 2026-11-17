@@ -1,0 +1,48 @@
+/* AIの使い方（AI活用AIの使い方_*.html）で共通の見た目 */
+  .viz-root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface: #fcfcfb; --sunken: #f3f2ee;
+    --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+    --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
+    --s1: #2a78d6; --s3: #1baf7a; --s3-soft: #def4ea; --todo: #c4302b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface: #1a1a19; --sunken: #222220;
+      --ink: #ffffff; --ink-2: #c3c2b7; --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+      --s1: #3987e5; --s3: #199e70; --s3-soft: #15302a; --todo: #e66767;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .viz-root { background: var(--page); color: var(--ink); font-family: system-ui, -apple-system, "Segoe UI", "Yu Gothic UI", "Meiryo UI", sans-serif; font-size: 14px; line-height: 1.7; min-height: 100vh; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 24px; display: flex; gap: 20px; align-items: baseline; flex-wrap: wrap; }
+  header h1 { font-size: 17px; margin: 0; }
+  header nav { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; }
+  header nav a { color: var(--ink-2); text-decoration: none; }
+  header nav a:hover { color: var(--ink); text-decoration: underline; }
+  main { padding: 16px 24px 48px; max-width: 1100px; }
+  h2 { font-size: 17px; margin: 32px 0 10px; padding-left: 8px; border-left: 4px solid var(--s3); scroll-margin-top: 60px; }
+  h2:target, h3:target { background: var(--s3-soft); }
+  header h1 .subtitle { font-size: 13px; font-weight: 400; color: var(--ink-2); }
+  h3 { font-size: 15px; margin: 22px 0 6px; scroll-margin-top: 60px; }
+  h3:target { background: var(--s3-soft); }
+  h4 { font-size: 14px; margin: 16px 0 6px; }
+  .muted { color: var(--muted); }
+  blockquote { margin: 0 0 12px; padding: 6px 12px; background: var(--sunken); border-radius: 6px; color: var(--ink-2); }
+  blockquote p { margin: 2px 0; }
+  table { border-collapse: collapse; margin: 6px 0 12px; background: var(--surface); }
+  th, td { border: 1px solid var(--grid); padding: 5px 9px; text-align: left; vertical-align: top; }
+  th { background: var(--sunken); white-space: nowrap; }
+  code { font-family: Consolas, "BIZ UDGothic", monospace; font-size: 13px; background: var(--sunken); border-radius: 4px; padding: 0 4px; }
+  .code { position: relative; margin: 6px 0 12px; }
+  .code pre { margin: 0; padding: 10px 12px; background: var(--surface); border: 1px solid var(--axis); border-radius: 6px; white-space: pre-wrap; }
+  .code pre code { background: none; padding: 0; }
+  .copy { position: absolute; top: 6px; right: 6px; font: inherit; font-size: 12px; padding: 1px 10px; border-radius: 6px; border: 1px solid var(--axis); background: var(--surface); color: var(--ink); cursor: pointer; }
+  .todo { color: var(--todo); font-weight: 600; }
+  hr { border: none; border-top: 1px solid var(--grid); margin: 28px 0; }
+  a { color: var(--s1); }
+  @media print { header { position: static; } .copy { display: none; } }
+  .lead { margin: 6px 0 14px; padding: 8px 12px; background: var(--sunken); border-radius: 6px; }
+  h2.use { margin-top: 30px; }

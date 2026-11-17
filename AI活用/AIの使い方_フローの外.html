@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>AIの使い方 ― フローの外</title>
+<link rel="stylesheet" href="ai.css">
+</head>
+<body>
+<div class="viz-root">
+<header>
+  <h1>AIの使い方 <span class="subtitle">― フローの外</span></h1>
+  <nav>
+    <a href="#newcomer">新人の質問</a>
+    <a href="#toolfix">ツールの小さな修正</a>
+    <a href="AIの使い方_共通.html">共通の型 →</a>
+    <a href="../全体まとめ.html#ai">全体まとめ →</a>
+  </nav>
+</header>
+<main>
+<p class="lead">使う前に、<a href="AIの使い方_共通.html">共通の型</a>（共通の前置き・渡してよいデータ・記録）を読んでおく。依頼文は、共通の前置きのあとに貼る。</p>
+<h2 id="newcomer" class="use">新人の質問</h2>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>中身</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>入力</td>
+<td><code>引き継ぎ.md</code>、<code>全体まとめ.html</code>、該当するイベントの新人向けの説明（<code>各論\新人向け\</code>）</td>
+</tr>
+<tr>
+<td>指示</td>
+<td>資料に書いてあることだけで答えて。なければ「資料にない」と答えて</td>
+</tr>
+<tr>
+<td>出力の形</td>
+<td>答えと、資料の箇所</td>
+</tr>
+<tr>
+<td>人の確認</td>
+<td>「資料にない」ことだけリーダーに聞く</td>
+</tr>
+<tr>
+<td>記録</td>
+<td>聞いた答えを資料に書き足す</td>
+</tr>
+</tbody></table>
+<h2 id="toolfix" class="use">ツールの小さな修正</h2>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>中身</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>入力</td>
+<td>症状（エラーメッセージ、期待した動きと実際の動き）、関係する関数やファイルだけ</td>
+</tr>
+<tr>
+<td>指示</td>
+<td>まず原因を説明して。合意したら、直したファイルを全体で出して</td>
+</tr>
+<tr>
+<td>出力の形</td>
+<td>原因の説明 → 直したファイル → 確かめ方</td>
+</tr>
+<tr>
+<td>人の確認</td>
+<td>差分を見て、実行して確かめる</td>
+</tr>
+<tr>
+<td>記録</td>
+<td>共通の記録。コミットのメッセージに要点を書く</td>
+</tr>
+</tbody></table>
+<ul>
+<li>外（自社端末）で作ったツールを直したときは、何を直したかを、値を伏せた言葉で外に伝える。</li>
+</ul>
+</main>
+</div>
+<script src="ai.js"></script>
+</body>
+</html>

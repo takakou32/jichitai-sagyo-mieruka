@@ -197,7 +197,7 @@
   // =====================================================================
   // データ（全体像はこの1枚だけで管理する）
   // who: 役割。own=自チーム、leader=現場リーダー等、outer=自チーム以外
-  // ai: AIを使うところ（fixed=決定、cand=案）  aiWhat: AIに何をさせるか  aiGuide: 別の作業の使い方を使うときの飛び先（AIの使い方の型.html）  aiReview: 案の見立て（keep=残す、ask=要相談）  todo: 要確認
+  // ai: AIを使うところ（fixed=決定、cand=案）  aiWhat: AIに何をさせるか  aiGuide: 別の作業の使い方を使うときの飛び先（例：run-E2）  aiReview: 案の見立て（keep=残す、ask=要相談）  todo: 要確認
   // =====================================================================
 
   var GOAL = {
@@ -564,11 +564,12 @@
 
   // AI案の見立て（残す／要相談）と理由
   function aiReviewEl(r) { return h("div", { "class": "ai-review " + r.v }, [h("span", { "class": "v", text: r.v === "ask" ? "要相談" : "残す" }), r.why]); }
-  // 詳しい使い方（AIの使い方の型）へのリンク。作業の枠のクリック（印の切り替え）には伝えない
-  var AI_GUIDE_FILE = "AI活用/AIの使い方の型.html";
+  // 詳しい使い方（AI活用/AIの使い方_フロー名.html）へのリンク。作業の枠のクリック（印の切り替え）には伝えない
+  // 使い方はフローごとのファイル（AI活用/AIの使い方_フロー名.html）にある。共通の型は AIの使い方_共通.html
+  function aiGuideFile(id) { var fid = id.split("-")[0], fl = FLOWS.filter(function (g) { return g.id === fid; })[0]; return "AI活用/AIの使い方_" + fl.name + ".html"; }
   function aiGuideEl(f, x) {
     var id = x.aiGuide || f.id + "-" + x.no;  // 飛び先は「フローのid-作業の番号」。別の作業の使い方を使うときだけ aiGuide に書く
-    var a = h("a", { href: AI_GUIDE_FILE + "#" + id, "class": "ai-guide", text: "詳しい使い方 →" });
+    var a = h("a", { href: aiGuideFile(id) + "#" + id, "class": "ai-guide", text: "詳しい使い方 →" });
     a.onclick = function (e) { e.stopPropagation(); };
     return a;
   }
@@ -627,6 +628,7 @@
     fill(aiBox, [
       cards.length ? h("div", { "class": "ai-grid" }, cards) : h("div", { "class": "muted", text: "AIの印の付いた作業はない" }),
       h("div", { "class": "no-ai", text: "この一覧は、フローの「AI」「AI案」の印から作っている。印はフローの作業の枠をクリックして切り替える。" }),
+      h("div", { "class": "no-ai" }, ["AIに頼むときの共通の型（共通の前置き・渡してよいデータ・記録）：", h("a", { href: "AI活用/AIの使い方_共通.html", text: "AIの使い方_共通 →" })]),
       h("div", { "class": "no-ai" }, [h("b", { text: "置くかどうかの観点：" }), AI_RULE]),
       h("div", { "class": "no-ai", text: NO_AI + "（案）" })
     ]);

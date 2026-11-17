@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>AIの使い方 ― 共通の型（使う前に読む）</title>
+<link rel="stylesheet" href="ai.css">
+</head>
+<body>
+<div class="viz-root">
+<header>
+  <h1>AIの使い方 <span class="subtitle">― 共通の型（使う前に読む）</span></h1>
+  <nav>
+    <a href="#preface">共通の前置き</a>
+    <a href="#data">渡してよいデータ</a>
+    <a href="#record">記録</a>
+    <a href="../全体まとめ.html#ai">全体まとめ →</a>
+  </nav>
+</header>
+<main>
+<p class="lead">フローの作業ごとの使い方は、フローごとのファイル（AIの使い方_移行の準備.html など）にある。全体まとめの「詳しい使い方 →」から飛べる。</p>
+<blockquote>
+<p><span class="todo">〔要確認〕</span>は推測。
+道具（エージェントかチャットか）にも、モデルにも依存しない。違うのは、入力と出力を運ぶのがツールか人か、だけ。</p>
+</blockquote>
+<p>型はひとつ。AIを使うときは、次の5つを決めてから頼む。フローの作業ごとに5つを埋めたものを「使い方」と呼ぶ。</p>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>決めること</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>入力</td>
+<td>何を渡すか</td>
+</tr>
+<tr>
+<td>指示</td>
+<td>何を頼むか（共通の前置き＋この場面の依頼）。版の番号を付ける</td>
+</tr>
+<tr>
+<td>出力の形</td>
+<td>何を、どの形で返させるか</td>
+</tr>
+<tr>
+<td>人の確認</td>
+<td>人が何を確かめてから次へ進むか</td>
+</tr>
+<tr>
+<td>記録</td>
+<td>何を残すか</td>
+</tr>
+</tbody></table>
+<h2 id="preface">共通の前置き（v0.1）</h2>
+<p>どの使い方でも、最初に渡す。</p>
+<div class="code"><button type="button" class="copy">コピー</button><pre><code>自治体システム標準化の移行・保守作業を手伝ってください。
+事実と推測を分け、根拠（ログの行、ソースの箇所、手順書の項目）を示してください。
+材料が足りなければ、推測で埋めずに、足りないものを挙げてください。
+判断が必要なことは、選択肢と影響を示して、人に委ねてください。
+</code></pre></div>
+<h2 id="data">渡してよいデータ（v0.1）</h2>
+<p>現場の Copilot Chat は、エンタープライズデータ保護が効いている。</p>
+<ul>
+<li>個人情報を含まなければ、業務の資料・ログ・ソースは渡してよい。</li>
+<li>個人情報（住民の氏名・住所・生年月日・宛名番号など、個人を特定できる値）は渡さない。</li>
+<li>住民データを扱うときは、値の代わりに、項目名・値の形（桁数・文字種・空かどうか）・件数を渡す。</li>
+<li>ログや画面の写しに個人情報が出ているときは、伏せてから渡す。伏せられないものは渡さない。</li>
+<li>迷ったら渡さず、リーダーに聞く。</li>
+</ul>
+<h2 id="record">記録</h2>
+<p>会話の最後にAIにまとめさせ、人が「人の判断」を書き足して残す。</p>
+<div class="code"><button type="button" class="copy">コピー</button><pre><code>件名／日付／使い方と版／渡した材料／AIの答えの要点／人の判断（採用・修正・不採用と理由）
+</code></pre></div>
+</main>
+</div>
+<script src="ai.js"></script>
+</body>
+</html>
