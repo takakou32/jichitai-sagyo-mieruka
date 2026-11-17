@@ -197,7 +197,7 @@
   // =====================================================================
   // データ（全体像はこの1枚だけで管理する）
   // who: 役割。own=自チーム、leader=現場リーダー等、outer=自チーム以外
-  // ai: AIを使うところ（fixed=決定、cand=案）  aiWhat: AIに何をさせるか  aiGuide: 詳しい使い方の型（AIの使い方の型.html の見出しの記号）  aiReview: 案の見立て（keep=残す、ask=要相談）  todo: 要確認
+  // ai: AIを使うところ（fixed=決定、cand=案）  aiWhat: AIに何をさせるか  aiGuide: 別の作業の使い方を使うときの飛び先（AIの使い方の型.html）  aiReview: 案の見立て（keep=残す、ask=要相談）  todo: 要確認
   // =====================================================================
 
   var GOAL = {
@@ -253,7 +253,7 @@
       phases: [
         { name: "A. 切替日に向けて", steps: [
           { no: "A1", t: "要員の概算の割り当て", when: "数か月前", who: "リーダー", c: "leader", done: "団体ごとに、担当者の見込みが立っている" },
-          { no: "A2", t: "手順書・資産の確定", when: "2週間前まで（C3 に合わせる）", who: "作業者（確認の観点はリーダーが伝える）", c: "own", done: "前回の課題を反映し、今回の団体向けの手順書・資産が確定している", ai: "cand", aiGuide: "E", aiWhat: "前回の課題・団体ごとの差分・手順書を添付し、どこに反映したかの対応表を返させる。見つからないものは未反映とさせる", aiReview: { v: "keep", why: "前回の課題・団体ごとの差分・手順書を渡せば、それだけで点検できる" } },
+          { no: "A2", t: "手順書・資産の確定", when: "2週間前まで（C3 に合わせる）", who: "作業者（確認の観点はリーダーが伝える）", c: "own", done: "前回の課題を反映し、今回の団体向けの手順書・資産が確定している", ai: "cand", aiWhat: "前回の課題・団体ごとの差分・手順書を添付し、どこに反映したかの対応表を返させる。見つからないものは未反映とさせる", aiReview: { v: "keep", why: "前回の課題・団体ごとの差分・手順書を渡せば、それだけで点検できる" } },
           { no: "A3", t: "要員の確定", when: "数週間前", who: "リーダー", c: "leader", done: "当日の要員・連絡先・現場リーダー等が決まっている" },
           { no: "A4", t: "事前作業（初期化・資産の格納・手順書の印刷）", when: "前日", who: "作業者", c: "own", done: "事前作業の手順がすべて済んでいる" }
         ] },
@@ -273,7 +273,7 @@
         ] },
         { name: "エラーが出たとき", steps: [
           { no: "E1", t: "作業を止め、事実を報告する", when: "発生したらすぐ", who: "作業者", c: "err", done: "いつ・どこで・何が起きたか、どこまで進んでいたか、何をしたか、今どういう状態かを確認者に伝えている。ログは退避してある" },
-          { no: "E2", t: "原因と影響を説明する", when: "E1 のあとすぐ", who: "現場リーダー等", c: "leader", done: "原因と、作業の続行への影響を確認者に説明している", ai: "fixed", aiWhat: "型A。事象の説明・ログ（個人情報は伏せる）・ソース・トラブル一覧を添付し、原因と続行への影響を見立てさせる" },
+          { no: "E2", t: "原因と影響を説明する", when: "E1 のあとすぐ", who: "現場リーダー等", c: "leader", done: "原因と、作業の続行への影響を確認者に説明している", ai: "fixed", aiWhat: "トラブルシュート。事象の説明・ログ（個人情報は伏せる）・ソース・トラブル一覧を添付し、原因と続行への影響を見立てさせる" },
           { no: "→", t: "判断（続行・切り戻し）", when: "", who: "センター（判断する人は未定）", c: "outer", done: "致命的なエラーかどうか、Go/No-Go、切り戻しの要否を判断する" }
         ] },
         { name: "事後", steps: [
@@ -311,7 +311,7 @@
         ] },
         { name: "実施", steps: [
           { no: "6", t: "手順書どおりにデプロイ", when: "実施日", who: "作業者", c: "own", done: "手順書の最後まで実施している" },
-          { no: "E", t: "エラーが出たとき", when: "", who: "作業者 → 現場リーダー等", c: "err", done: "作業を止めて事実を報告し、原因と影響を判断する（移行の実施と同じ）", ai: "fixed", aiWhat: "移行の実施の E2 と同じ（型A）" }
+          { no: "E", t: "エラーが出たとき", when: "", who: "作業者 → 現場リーダー等", c: "err", done: "作業を止めて事実を報告し、原因と影響を判断する（移行の実施と同じ）", ai: "fixed", aiGuide: "run-E2", aiWhat: "移行の実施の E2 と同じ（トラブルシュート）" }
         ] },
         { name: "事後", steps: [
           { no: "7", t: "確認", when: "実施日", who: "作業者", c: "own", done: "手順書の確認項目がすべて済んでいる" },
@@ -566,9 +566,9 @@
   function aiReviewEl(r) { return h("div", { "class": "ai-review " + r.v }, [h("span", { "class": "v", text: r.v === "ask" ? "要相談" : "残す" }), r.why]); }
   // 詳しい使い方（AIの使い方の型）へのリンク。作業の枠のクリック（印の切り替え）には伝えない
   var AI_GUIDE_FILE = "AI活用/AIの使い方の型.html";
-  function aiGuideEl(x) {
-    if (!x.aiGuide) return null;
-    var a = h("a", { href: AI_GUIDE_FILE + "#" + x.aiGuide, "class": "ai-guide", text: "詳しい使い方（型" + x.aiGuide + "） →" });
+  function aiGuideEl(f, x) {
+    var id = x.aiGuide || f.id + "-" + x.no;  // 飛び先は「フローのid-作業の番号」。別の作業の使い方を使うときだけ aiGuide に書く
+    var a = h("a", { href: AI_GUIDE_FILE + "#" + id, "class": "ai-guide", text: "詳しい使い方 →" });
     a.onclick = function (e) { e.stopPropagation(); };
     return a;
   }
@@ -587,7 +587,7 @@
           x.when ? h("div", { "class": "when", text: "いつ：" + x.when }) : null,
           h("span", { "class": "who", text: x.who }),
           h("div", { "class": "done" }, ["完了：" + x.done, x.todo ? h("span", { "class": "todo", text: " 要確認" }) : null]),
-          ai ? h("div", { "class": "ai-what" }, [h("b", { text: "AI：" }), x.aiWhat || "（何をさせるかは未定）", aiGuideEl(x)]) : null,
+          ai ? h("div", { "class": "ai-what" }, [h("b", { text: "AI：" }), x.aiWhat || "（何をさせるかは未定）", aiGuideEl(f, x)]) : null,
           ai === "cand" && x.aiReview ? aiReviewEl(x.aiReview) : null
         ]);
         card.onclick = function () { aiToggle(f, x); };
@@ -621,7 +621,7 @@
       FLOWS.forEach(function (f) { f.phases.forEach(function (p) { p.steps.forEach(function (x) {
         if (aiOf(f, x) !== lv) return;
         cards.push(h("div", { "class": "ai-card" }, [h("span", { "class": "lv " + (lv === "fixed" ? "fixed" : "aicand"), text: lv === "fixed" ? "決まった" : "案" }),
-          h("b", { text: x.t }), h("div", { "class": "where", text: f.name + "／" + x.no }), h("div", { "class": "what" }, [x.aiWhat || "（何をさせるかは未定）", aiGuideEl(x)]), lv === "cand" && x.aiReview ? aiReviewEl(x.aiReview) : null]));
+          h("b", { text: x.t }), h("div", { "class": "where", text: f.name + "／" + x.no }), h("div", { "class": "what" }, [x.aiWhat || "（何をさせるかは未定）", aiGuideEl(f, x)]), lv === "cand" && x.aiReview ? aiReviewEl(x.aiReview) : null]));
       }); }); });
     });
     fill(aiBox, [
