@@ -197,7 +197,7 @@
   // =====================================================================
   // データ（全体像はこの1枚だけで管理する）
   // who: 役割。own=自チーム、leader=現場リーダー等、outer=自チーム以外
-  // ai: AIを使うところ（fixed=決定、cand=案）  aiWhat: AIに何をさせるか  aiGuide: 詳しい使い方の型（AIの使い方の型.md）  aiReview: 案の見立て（keep=残す、ask=要相談）  todo: 要確認
+  // ai: AIを使うところ（fixed=決定、cand=案）  aiWhat: AIに何をさせるか  aiGuide: 詳しい使い方の型（AIの使い方の型.html の見出しの記号）  aiReview: 案の見立て（keep=残す、ask=要相談）  todo: 要確認
   // =====================================================================
 
   var GOAL = {
@@ -565,10 +565,10 @@
   // AI案の見立て（残す／要相談）と理由
   function aiReviewEl(r) { return h("div", { "class": "ai-review " + r.v }, [h("span", { "class": "v", text: r.v === "ask" ? "要相談" : "残す" }), r.why]); }
   // 詳しい使い方（AIの使い方の型）へのリンク。作業の枠のクリック（印の切り替え）には伝えない
-  var AI_GUIDE_FILE = "AI活用/AIの使い方の型.md";
+  var AI_GUIDE_FILE = "AI活用/AIの使い方の型.html";
   function aiGuideEl(x) {
     if (!x.aiGuide) return null;
-    var a = h("a", { href: AI_GUIDE_FILE, "class": "ai-guide", text: "詳しい使い方（型" + x.aiGuide + "） →" });
+    var a = h("a", { href: AI_GUIDE_FILE + "#" + x.aiGuide, "class": "ai-guide", text: "詳しい使い方（型" + x.aiGuide + "） →" });
     a.onclick = function (e) { e.stopPropagation(); };
     return a;
   }
