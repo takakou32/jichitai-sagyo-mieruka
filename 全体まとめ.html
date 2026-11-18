@@ -481,10 +481,9 @@
     ]),
     h("div", { "class": "arrow-row", text: "①で理由がわかった差異を積み上げておくほど、②で人が調べる差異が減る" })
   ]);
-  // 切替の区分の色の枠でくくる（区分の名前と色は FRAME から引く）
-  var loopGroup = FRAME.filter(function (g) { return g.name === "切替"; })[0];
-  sec("loop", "切替の流れ", [h("div", { "class": "group " + loopGroup.g }, [h("div", { "class": "group-h", text: loopGroup.name }),
-    h("div", { "class": "fig loop-wrap" }, [h("div", null, [h("div", { "class": "fig-title", text: "リハーサルから本番までの繰り返し" }), loopSvg()]), stageBox])])]);
+  // 切替の流れ（繰り返しの図と3段階の図）。節にはせず、フローの切替の枠の先頭に置く
+  var loopFig = h("div", { "class": "fig", id: "loop" }, [h("div", { "class": "fig-title", text: "切替の流れ" }),
+    h("div", { "class": "loop-wrap" }, [h("div", null, [h("div", { "class": "fig-title", text: "リハーサルから本番までの繰り返し" }), loopSvg()]), stageBox])]);
 
   // 4. フロー
   var legend = h("div", { "class": "legend" }, [
@@ -611,6 +610,7 @@
     var y = window.scrollY;
     fill(flowsBox, [legend, aiBar()].concat(FRAME.map(function (g) {
       var figs = FLOWS.filter(function (f) { return g.events.some(function (e) { return e.id === f.id; }); }).map(flowFig);
+      if (g.name === "切替") figs.unshift(loopFig);
       return figs.length ? h("div", { "class": "group " + g.g }, [h("div", { "class": "group-h", text: g.name })].concat(figs)) : null;
     })));
     try { window.scrollTo(0, y); } catch (e) {}
