@@ -95,6 +95,7 @@
   .group + .group { margin-top: 16px; }
   .group-h { display: inline-block; font-size: 12px; font-weight: 700; background: var(--surface); border: 1px solid var(--g); border-radius: 10px; padding: 0 10px; margin: 0 0 8px; }
   .cycle-h { margin: 14px 0 8px; padding-top: 6px; border-top: 1px dashed var(--g); font-size: 12px; font-weight: 700; color: var(--ink-2); }
+  .gantt-sub { font-size: 12px; font-weight: 700; color: var(--ink-2); margin: 4px 0 2px; }
   .group .fig > .fig-title { font-size: 17px; line-height: 1.3; padding-left: 10px; border-left: 5px solid var(--g); }
   .frame-note { margin-top: 10px; display: flex; gap: 16px; flex-wrap: wrap; color: var(--ink-2); font-size: 12px; }
 
@@ -237,20 +238,47 @@
     "手順書・資産の直しはイベントにせず、「随時の修正」のルールで回す"
   ];
 
+  // 区分ごとの時間軸（枠の先頭に置く）。base：基準日の列。c：leader・outer・run・dash は作業の枠と同じ意味
+  var GANTT = {
+    "切替": [
+      { title: "基準日：切替日（リハーサル日・本番切替日）", base: 4,
+        cols: ["数か月前", "数週間前", "2週間前", "前日", "実施日", "実施後1週間", "次の切替へ"],
+        rows: [
+          { label: "移行の準備", items: [
+            { at: 0, t: "A1 要員の割り当て", c: "leader" }, { at: 1, t: "A3 要員の確定", c: "leader" }, { at: 2, t: "A2 手順書・資産の確定" }, { at: 3, t: "A4 事前作業" }] },
+          { label: "移管資産", items: [
+            { from: 0, to: 1.4, t: "C1 取りまとめ（本来は随時）", c: "dash" }, { from: 1.4, to: 2, t: "C2 テスト" }, { at: 2, t: "C3 リリース" },
+            { from: 2, to: 4, t: "移行チームが一度通して実行", c: "outer" }] },
+          { label: "移行の実施", items: [{ at: 4, t: "実施（本番は最終確認の支援も）", c: "run" }] },
+          { label: "振り返りと課題化", items: [{ from: 4, to: 5, t: "振り返り・課題化" }] },
+          { label: "随時の修正", items: [{ from: 0, to: 2, t: "移行チームに渡す資産", end: "締切" }, { from: 5, to: 6, t: "次の切替に向けて直す", c: "dash" }] },
+          { label: "", items: [{ from: 0, to: 3, t: "自チーム内の修正（手順書など）", end: "締切" }] }
+        ] }
+    ],
+    "バージョンアップ": [
+      { title: "稼働前のバージョンアップ（基準日：実施日）", base: 2,
+        cols: ["2週間程度前", "2日前", "実施日", "実施後3日以内"],
+        rows: [
+          { label: "日程と要員", items: [{ at: 0, t: "1 日程・2 要員・3 周知", c: "leader" }] },
+          { label: "資産と手順書", items: [{ from: 0, to: 1, t: "4 資産・5 手順書", end: "締切" }] },
+          { label: "実施", items: [{ at: 2, t: "6 デプロイ・7 確認", c: "run" }] },
+          { label: "事後", items: [{ from: 2, to: 3, t: "8 一覧の更新・9 振り返り" }] }
+        ] },
+      { title: "稼働後のバージョンアップ（基準日：本番適用日）", base: 3,
+        cols: ["リリース通知", "8日前", "5日前", "本番適用日", "実施後3日以内"],
+        rows: [
+          { label: "受け取り", items: [{ at: 0, t: "1〜3 リリース通知・連絡", c: "outer" }] },
+          { label: "受け入れ検証", items: [{ from: 0, to: 1, t: "4 開発環境へ適用 → 5 テスト" }] },
+          { label: "承認", items: [{ at: 1, t: "6 開発管理台帳" }, { from: 1, to: 2, t: "7 稟議（2〜3日）", c: "outer", end: "申請の期限（規定）" }, { at: 2, t: "8 作業申請", c: "outer" }] },
+          { label: "適用", items: [{ at: 3, t: "9 適用（閉庁後）", c: "run" }] },
+          { label: "事後", items: [{ from: 3, to: 4, t: "10〜12 確認・一覧・振り返り" }] }
+        ] }
+    ]
+  };
+
   var FLOWS = [
     // cycle：切替の流れ（繰り返し）の何番目の段か（並べる順に使う）。parallel：繰り返しと並行して進めるもの。group：FRAME のイベントではないが、その区分の枠に入れるもの
     { id: "prep", name: "移行の準備", cycle: 1, guide: "各論/新人向け/説明_移行の準備.md",
-      timeline: {
-        cols: ["数か月前", "数週間前", "2週間前", "前日", "実施日"],
-        rows: [
-          { label: "A 切替日に向けて", items: [
-            { at: 0, t: "A1 要員の割り当て", c: "leader" }, { at: 1, t: "A3 要員の確定", c: "leader" }, { at: 2, t: "A2 手順書・資産の確定" }, { at: 3, t: "A4 事前作業" }, { at: 4, t: "実施", c: "run" }] },
-          { label: "C 移管資産", items: [
-            { from: 0, to: 1.4, t: "C1 取りまとめ（本来は随時）", c: "dash" }, { from: 1.4, to: 2, t: "C2 テスト" }, { at: 2, t: "C3 リリース" },
-            { from: 2, to: 4, t: "移行チームが一度通して実行", c: "outer" }] },
-          { label: "随時の修正", items: [{ from: 0, to: 2, t: "移行チームに渡す資産", end: "締切" }] },
-          { label: "", items: [{ from: 0, to: 3, t: "自チーム内の修正（手順書など）", end: "締切" }] }
-        ] },
       lead: [["基準日", "切替日（リハーサル日・本番切替日）"], ["移管", "開発担当分の業務（住民記録・宛名管理・印鑑登録など）の移行ツールのうち、抽出工程の実施は移行チームに移管している"], ["key", "前回の課題が反映されているか、団体ごとの差分が織り込まれているかを、2週間前の確定の時点で確かめる"]],
       phases: [
         { name: "A. 切替日に向けて", steps: [
@@ -288,7 +316,7 @@
         ] }
       ] },
     { id: "fix", name: "随時の修正", group: "切替", cycle: 4,
-      lead: [["締め切り", "移行の準備の図の「随時の修正」の行のとおり"]],
+      lead: [["締め切り", "切替の時間軸の図の「随時の修正」の行のとおり"]],
       phases: [
         { name: "ルール", rule: { title: "日程は決めず、次のルールで回す", items: ["振り返りの課題・改善点・緊急リリースが出たら、ボードに起票する", "手順書・資産を直し、直した版を記録する", "締め切りに間に合わないものは、その切替では使わない"] },
           steps: [] }
@@ -332,13 +360,6 @@
         ] }
       ] },
     { id: "vupost", name: "稼働後のバージョンアップ",
-      timeline: {
-        cols: ["リリース通知", "8日前", "5日前", "本番適用日"],
-        rows: [
-          { label: "受け入れ検証", items: [{ from: 0, to: 1, t: "4 開発環境へ適用 → 5 テスト" }] },
-          { label: "承認", items: [{ at: 1, t: "6 開発管理台帳" }, { from: 1, to: 2, t: "7 稟議（2〜3日）", c: "outer", end: "申請の期限（規定）" }, { at: 2, t: "8 作業申請", c: "outer" }] },
-          { label: "適用", items: [{ at: 3, t: "9 適用（閉庁後）", c: "run" }] }
-        ] },
       lead: [["基準日", "本番適用日"]],
       phases: [
         { name: "受け取り", steps: [
@@ -513,7 +534,7 @@
     function X(i) { return LW + 20 + i * cw; }
     var svg = s("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", style: "max-width:" + W + "px;display:block;margin-bottom:10px", role: "img", "aria-label": "基準日からの逆算" });
     T.cols.forEach(function (c, i) {
-      var last = i === n;
+      var last = i === (T.base != null ? T.base : n);  // 基準日の列を太線にする
       s("line", { x1: X(i), x2: X(i), y1: TOP - 6, y2: H - 4, stroke: last ? "var(--ink)" : "var(--grid)", "stroke-width": last ? 2 : 1, "stroke-dasharray": last ? "" : "3 3" }, svg);
       st(c, { x: X(i), y: 14, "text-anchor": "middle", "class": "tick", "font-weight": last ? 700 : 400 }, svg);
     });
@@ -611,14 +632,19 @@
       if (p.rule) kids.push(h("div", { "class": "rule" }, [h("b", { text: p.rule.title }), h("ol", null, p.rule.items.map(function (i) { return h("li", { text: i }); }))]));
       return h("div", { "class": "phase" }, kids);
     }));
-    var tl = f.timeline ? timelineSvg(f.timeline) : null;
     var title = h("div", { "class": "fig-title" }, [f.name, f.guide ? h("a", { href: f.guide, "class": "guide", text: "詳しい説明 →" }) : h("span", { "class": "guide muted", text: "詳しい説明：未作成" })]);
-    return h("div", { "class": "fig", id: "flow-" + f.id }, [title, lead, tl, cols]);
+    return h("div", { "class": "fig", id: "flow-" + f.id }, [title, lead, cols]);
   }
   // イベントの区分（FRAME）ごとに、区分の色の枠でくくる
   function fill(box, kids) { while (box.firstChild) box.removeChild(box.firstChild); kids.forEach(function (k) { if (k) box.appendChild(k); }); }
   var flowsBox = h("div");
   // 区分の枠に入れるフロー：FRAME のイベントか、group でその区分を指定したもの
+  // 区分の時間軸の図（GANTT）。基準日が違うものは、1つの図の中に段を分けて並べる
+  function ganttFig(g) {
+    var kids = [h("div", { "class": "fig-title", text: g.name + "の時間軸" })];
+    GANTT[g.name].forEach(function (T) { kids.push(h("div", { "class": "gantt-sub", text: T.title }), timelineSvg(T)); });
+    return h("div", { "class": "fig", id: "gantt-" + g.g }, kids);
+  }
   function flowsOf(g) {
     return FLOWS.filter(function (f) { return f.group === g.name || g.events.some(function (e) { return e.id === f.id; }); });
   }
@@ -633,6 +659,7 @@
         kids = [loopFig, h("div", { "class": "cycle-h", text: "繰り返し（リハーサルから本番まで、切替のたびに回す）" })].concat(cyc.map(flowFig))
           .concat(par.length ? [h("div", { "class": "cycle-h", text: "繰り返しと並行して進める" })].concat(par.map(flowFig)) : []);
       } else kids = list.map(flowFig);
+      if (GANTT[g.name]) kids.unshift(ganttFig(g));
       return kids.length ? h("div", { "class": "group " + g.g }, [h("div", { "class": "group-h", text: g.name })].concat(kids)) : null;
     })));
     try { window.scrollTo(0, y); } catch (e) {}
