@@ -94,6 +94,7 @@
   .group { background: var(--g-soft); border: 2px solid var(--g); border-radius: 12px; padding: 10px 12px 12px; }
   .group + .group { margin-top: 16px; }
   .group-h { display: inline-block; font-size: 12px; font-weight: 700; background: var(--surface); border: 1px solid var(--g); border-radius: 10px; padding: 0 10px; margin: 0 0 8px; }
+  .cycle-h { margin: 14px 0 8px; padding-top: 6px; border-top: 1px dashed var(--g); font-size: 12px; font-weight: 700; color: var(--ink-2); }
   .group .fig > .fig-title { font-size: 17px; line-height: 1.3; padding-left: 10px; border-left: 5px solid var(--g); }
   .frame-note { margin-top: 10px; display: flex; gap: 16px; flex-wrap: wrap; color: var(--ink-2); font-size: 12px; }
 
@@ -212,7 +213,7 @@
 
   var FRAME = [
     { name: "切替", g: "g1", state: "done", events: [
-      { id: "prep", name: "移行の準備", desc: "切替日から逆算して進める準備。あわせて、手順書・資産の随時の修正と、移行チームへの移管資産のリリースを行う" },
+      { id: "prep", name: "移行の準備", desc: "切替日から逆算して進める準備。あわせて、移行チームへの移管資産のリリースを行う" },
       { id: "run", name: "移行の実施", desc: "リハーサル・全体移行テスト・本番切替。当日は手順書どおりに進め、エラーが出たときは原因と影響の説明までを受け持つ" },
       { id: "verify", name: "移行結果の確認", desc: "自治体に出す移行結果報告資料を作るための、移行前後のデータ比較。R8年度中・R9年度の稼働直前・本番切替時の3段階で進める" }
     ] },
@@ -237,7 +238,8 @@
   ];
 
   var FLOWS = [
-    { id: "prep", name: "移行の準備", guide: "各論/新人向け/説明_移行の準備.md",
+    // cycle：切替の流れ（繰り返し）の何番目の段か（並べる順に使う）。parallel：繰り返しと並行して進めるもの。group：FRAME のイベントではないが、その区分の枠に入れるもの
+    { id: "prep", name: "移行の準備", cycle: 1, guide: "各論/新人向け/説明_移行の準備.md",
       timeline: {
         cols: ["数か月前", "数週間前", "2週間前", "前日", "実施日"],
         rows: [
@@ -246,7 +248,7 @@
           { label: "C 移管資産", items: [
             { from: 0, to: 1.4, t: "C1 取りまとめ（本来は随時）", c: "dash" }, { from: 1.4, to: 2, t: "C2 テスト" }, { at: 2, t: "C3 リリース" },
             { from: 2, to: 4, t: "移行チームが一度通して実行", c: "outer" }] },
-          { label: "B 随時の修正", items: [{ from: 0, to: 2, t: "移行チームに渡す資産", end: "締切" }] },
+          { label: "随時の修正", items: [{ from: 0, to: 2, t: "移行チームに渡す資産", end: "締切" }] },
           { label: "", items: [{ from: 0, to: 3, t: "自チーム内の修正（手順書など）", end: "締切" }] }
         ] },
       lead: [["基準日", "切替日（リハーサル日・本番切替日）"], ["移管", "開発担当分の業務（住民記録・宛名管理・印鑑登録など）の移行ツールのうち、抽出工程の実施は移行チームに移管している"], ["key", "前回の課題が反映されているか、団体ごとの差分が織り込まれているかを、2週間前の確定の時点で確かめる"]],
@@ -257,15 +259,13 @@
           { no: "A3", t: "要員の確定", when: "数週間前", who: "リーダー", c: "leader", done: "当日の要員・連絡先・現場リーダー等が決まっている" },
           { no: "A4", t: "事前作業（初期化・資産の格納・手順書の印刷）", when: "前日", who: "作業者", c: "own", done: "事前作業の手順がすべて済んでいる" }
         ] },
-        { name: "B. 随時の修正", rule: { title: "日程は決めず、次のルールで回す", items: ["振り返りの課題・改善点・緊急リリースが出たら、ボードに起票する", "手順書・資産を直し、直した版を記録する", "締め切り（上の図）に間に合わないものは、その切替では使わない"] },
-          steps: [] },
         { name: "C. 移行チームへの移管資産のリリース", steps: [
           { no: "C1", t: "更新資産の取りまとめ", when: "本来は随時。遅くとも C3 の期限から逆算して始める", who: "開発担当（自チーム・センター職員）", c: "own", done: "抽出工程の更新資産がそろっている。抽出工程に手を入れたら、その場でボードに起票しておく" },
           { no: "C2", t: "テストの実施", when: "C1 のあと", who: "自チーム", c: "own", done: "テストが済み、結果を記録している" },
           { no: "C3", t: "移行チームへのリリース", when: "実施の2週間前まで（目安）", who: "自チーム → 移行チーム", c: "own", done: "移行チームが抽出工程を実施できる状態で、資産が渡っている" }
         ] }
       ] },
-    { id: "run", name: "移行の実施", guide: "各論/新人向け/説明_移行の実施.md",
+    { id: "run", name: "移行の実施", cycle: 2, guide: "各論/新人向け/説明_移行の実施.md",
       lead: [["種類", "リハーサル（全体移行テストを含む）／本番切替"], ["違い", "違うのは目的・実施日・結果の扱いだけ。環境（本番環境）と判断する人は同じ"], ["key", "判断するのはセンター。自チームが受け持つのは、原因と影響の説明まで"]],
       phases: [
         { name: "当日", steps: [
@@ -276,12 +276,24 @@
           { no: "E2", t: "原因と影響を説明する", when: "E1 のあとすぐ", who: "現場リーダー等", c: "leader", done: "原因と、作業の続行への影響を確認者に説明している", ai: "fixed", aiWhat: "トラブルシュート。事象の説明・ログ（個人情報は伏せる）・ソース・トラブル一覧を添付し、原因と続行への影響を見立てさせる" },
           { no: "→", t: "判断（続行・切り戻し）", when: "", who: "センター（判断する人は未定）", c: "outer", done: "致命的なエラーかどうか、Go/No-Go、切り戻しの要否を判断する" }
         ] },
-        { name: "事後", steps: [
-          { no: "4", t: "振り返りと課題化", when: "実施後1週間程度", who: "作業者・リーダー・開発担当", c: "own", done: "4つの観点（急ごしらえの作業、口頭で済ませた作業、エラーとその説明、予定より時間がかかった作業）で課題を洗い出し、各作業の所要時間とあわせて登録している。開発担当の都合がつかなければ、自チームだけで先に行う" },
+        { name: "本番切替のとき", steps: [
           { no: "5", t: "最終確認の支援（本番のみ）", when: "本番切替の期間中", who: "作業者", c: "own", done: "他ベンダー提供データ作成処理の実行と、移行結果の確認を支援している。範囲は正式には決まっていないので、変わったら直す" }
         ] }
       ] },
-    { id: "verify", name: "移行結果の確認", guide: "各論/新人向け/説明_移行結果の確認.md",
+    { id: "review", name: "振り返りと課題化", group: "切替", cycle: 3,
+      lead: [["key", "洗い出した課題は、随時の修正で手順書・資産に反映する"]],
+      phases: [
+        { name: "実施のあと", steps: [
+          { no: "1", t: "振り返りと課題化", when: "実施後1週間程度", who: "作業者・リーダー・開発担当", c: "own", done: "4つの観点（急ごしらえの作業、口頭で済ませた作業、エラーとその説明、予定より時間がかかった作業）で課題を洗い出し、各作業の所要時間とあわせて登録している。開発担当の都合がつかなければ、自チームだけで先に行う" }
+        ] }
+      ] },
+    { id: "fix", name: "随時の修正", group: "切替", cycle: 4,
+      lead: [["締め切り", "移行の準備の図の「随時の修正」の行のとおり"]],
+      phases: [
+        { name: "ルール", rule: { title: "日程は決めず、次のルールで回す", items: ["振り返りの課題・改善点・緊急リリースが出たら、ボードに起票する", "手順書・資産を直し、直した版を記録する", "締め切りに間に合わないものは、その切替では使わない"] },
+          steps: [] }
+      ] },
+    { id: "verify", name: "移行結果の確認", parallel: true, guide: "各論/新人向け/説明_移行結果の確認.md",
       lead: [["①R8年度中の移行結果報告資料の作成", "移行テストのあと、その時点の最新データで行う。中間成果物として市町村に提出する。自チーム"], ["②R9年度の稼働直前の移行結果報告資料の作成", "リハーサルやテストで移行した最新データで行う。稼働判定の資料として提出する。自チーム"], ["③最終確認", "本番切替時。センターが主体で、自チームは支援"], ["key", "①で理由がわかった差異を積み上げておくほど、②が軽くなる"]],
       phases: [
         { name: "比べる", steps: [
@@ -606,12 +618,22 @@
   // イベントの区分（FRAME）ごとに、区分の色の枠でくくる
   function fill(box, kids) { while (box.firstChild) box.removeChild(box.firstChild); kids.forEach(function (k) { if (k) box.appendChild(k); }); }
   var flowsBox = h("div");
+  // 区分の枠に入れるフロー：FRAME のイベントか、group でその区分を指定したもの
+  function flowsOf(g) {
+    return FLOWS.filter(function (f) { return f.group === g.name || g.events.some(function (e) { return e.id === f.id; }); });
+  }
   function drawFlows() {
     var y = window.scrollY;
     fill(flowsBox, [legend, aiBar()].concat(FRAME.map(function (g) {
-      var figs = FLOWS.filter(function (f) { return g.events.some(function (e) { return e.id === f.id; }); }).map(flowFig);
-      if (g.name === "切替") figs.unshift(loopFig);
-      return figs.length ? h("div", { "class": "group " + g.g }, [h("div", { "class": "group-h", text: g.name })].concat(figs)) : null;
+      var list = flowsOf(g), kids;
+      if (list.some(function (f) { return f.cycle; })) {
+        // 切替：流れの図 → 繰り返しの段（cycle の順）→ 並行して進めるもの
+        var cyc = list.filter(function (f) { return f.cycle; }).sort(function (a, b) { return a.cycle - b.cycle; });
+        var par = list.filter(function (f) { return f.parallel; });
+        kids = [loopFig, h("div", { "class": "cycle-h", text: "繰り返し（リハーサルから本番まで、切替のたびに回す）" })].concat(cyc.map(flowFig))
+          .concat(par.length ? [h("div", { "class": "cycle-h", text: "繰り返しと並行して進める" })].concat(par.map(flowFig)) : []);
+      } else kids = list.map(flowFig);
+      return kids.length ? h("div", { "class": "group " + g.g }, [h("div", { "class": "group-h", text: g.name })].concat(kids)) : null;
     })));
     try { window.scrollTo(0, y); } catch (e) {}
   }
