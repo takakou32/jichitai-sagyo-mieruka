@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>標準化移行作業の全体像 ― 令和9年度の切替に向けたフロー整理とツール化の計画</title>
 <style>
   .viz-root {
@@ -125,9 +126,37 @@
   .step .done { font-size: 12px; color: var(--ink-2); margin-top: 3px; }
   .step .ai { position: absolute; top: 6px; right: 6px; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 0 5px; background: var(--s3); color: var(--on-bar); }
   .step .ai.cand { background: var(--surface); color: var(--ink); border: 1.5px solid var(--s3); padding: 0 4px; }
-  .step { cursor: pointer; }
-  .step:hover { outline: 1px dashed var(--s3); outline-offset: 1px; }
   .step.ai-changed { outline: 2px dashed var(--s3); outline-offset: 1px; }
+  .step > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; padding-right: 34px; }
+  .step > summary::-webkit-details-marker { display: none; }
+  .step > summary .no, .step > summary .t, .step > summary .when { flex-basis: 100%; }
+  .step > summary::after { content: "▸"; position: absolute; right: 6px; bottom: 4px; color: var(--muted); font-size: 11px; }
+  .step[open] > summary::after { content: "▾"; }
+  .step > summary:focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; border-radius: 4px; }
+  .step > summary .todo { font-size: 11px; }
+  .step button.ai { font: inherit; font-size: 10px; font-weight: 700; cursor: pointer; border: none; }
+  .step button.ai.cand { border: 1.5px solid var(--s3); }
+  .step button.ai.none { background: var(--surface); color: var(--muted); border: 1px dashed var(--s3); }
+  .step-body { margin-top: 4px; }
+  .only-worker .step:not([data-role=worker]):not([data-role=both]), .only-leader .step:not([data-role=leader]):not([data-role=both]) { opacity: 0.35; }
+  .flow-tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12px; margin: 0 0 12px; }
+  .flow-tools .label { color: var(--ink-2); }
+  .flow-tools .sep { width: 10px; }
+  .flow-tools .note { flex-basis: 100%; color: var(--ink-2); }
+  .flow-tools button, .edit-btn { font: inherit; font-size: 12px; padding: 1px 10px; border-radius: 12px; border: 1px solid var(--axis); background: var(--surface); color: var(--ink); cursor: pointer; }
+  .flow-tools .role-btn.on { background: var(--s1-soft); border-color: var(--s1); font-weight: 700; }
+  .edit-btn { margin-left: auto; }
+  body.editing .edit-btn { background: var(--s3-soft); border-color: var(--s3); font-weight: 700; }
+  .fig-sub { font-size: 12px; color: var(--ink-2); margin: -4px 0 6px; }
+  .howto { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .howto > div { background: var(--sunken); border-radius: 8px; padding: 8px 12px; font-size: 12px; }
+  .howto b { display: block; font-size: 13px; margin-bottom: 2px; }
+  .fold > summary { cursor: pointer; font-weight: 700; }
+  .fold[open] > summary { margin-bottom: 10px; }
+  .glossary { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 0; font-size: 12px; }
+  .glossary dt { font-weight: 700; }
+  .glossary dd { margin: 0; color: var(--ink-2); }
+  .noscript { margin: 24px; padding: 12px 16px; border: 1px solid #c4302b; border-radius: 8px; background: #fff; color: #0b0b0b; }
   .step .ai-what { font-size: 12px; margin-top: 4px; padding-top: 3px; border-top: 1px dotted var(--s3); }
   .ai-guide { display: inline-block; margin-left: 6px; font-size: 11px; color: var(--s1); }
   .ai-review { font-size: 11px; margin-top: 3px; color: var(--ink-2); }
@@ -179,10 +208,10 @@
   .open ul { margin: 0; padding-left: 18px; font-size: 12px; color: var(--ink-2); }
 
   @media (max-width: 1000px) {
-    .goal, .frame, .ai-grid, .open { grid-template-columns: 1fr 1fr; }
+    .goal, .frame, .ai-grid, .open, .howto { grid-template-columns: 1fr 1fr; }
     .loop-wrap { grid-template-columns: 1fr; }
   }
-  @media print { header { position: static; } .flow { grid-auto-flow: row; } .ai-bar { display: none; } .step.ai-changed { outline: none; } }
+  @media print { header { position: static; } .flow { grid-auto-flow: row; } .ai-bar, .flow-tools, .edit-btn { display: none; } .step.ai-changed { outline: none; } .step > summary::after { content: none; } }
 </style>
 </head>
 <body>
@@ -192,6 +221,7 @@
   <nav id="nav"></nav>
 </header>
 <main id="main"></main>
+<noscript><p class="noscript">この資料は JavaScript で描いています。JavaScript を有効にして開いてください。</p></noscript>
 </div>
 
 <script>
@@ -204,7 +234,7 @@
   // ai: AIを使うところ（fixed=決定、cand=案）  aiWhat: AIに何をさせるか  aiGuide: 別の作業の使い方を使うときの飛び先（例：run-E2）  aiReview: 案の見立て（keep=残す、ask=要相談）  todo: 要確認
   // =====================================================================
 
-  var META = { version: "v0.9", updated: "2026-11-19" };  // 直したら版と日付を上げる
+  var META = { version: "v1.0", updated: "2026-11-19" };  // 直したら版と日付を上げる
 
   var GOAL = {
     main: "令和9年度に集中する31団体の切替を、要員が減ったり入れ替わったりしても、品質を落とさずにやり遂げられる体制を整える。そのために作業を見える化してフローに整理し、フローをもとにしたツールで、特定の人に頼っている作業を減らす。",
@@ -465,6 +495,14 @@
     main.appendChild(h("section", { id: id }, [h("h2", { text: title })].concat(body)));
   }
 
+  // 0. 読み方（読み手ごとの入り口）
+  var HOWTO = [
+    ["初めての人", "「目的と完了の条件」→「イベントの枠組み」→「イベントごとのフロー」の順に読む。フローは、時間軸の図と切替の流れの図で全体をつかんでから、作業の見出しを押して中身を読む。わからない言葉は「用語集」で引く。"],
+    ["リーダー", "「イベントごとのフロー」で「リーダー・現場リーダー等」に絞り、自分の作業を確かめる。割り振りには時間軸の図を使い、「マイルストーン」の決まっていないことに目を通す。"],
+    ["設計（ツール・AI）", "「AIを使うところ」と「ツールの候補」を読む。フローの作業を［すべて開く］で開いて完了の状態を確かめ、AI の置き場所の検討は編集モードで行う。"]
+  ];
+  sec("howto", "読み方", [h("div", { "class": "fig howto" }, HOWTO.map(function (r) { return h("div", null, [h("b", { text: r[0] }), h("span", { text: r[1] })]); }))]);
+
   // 1. 目的
   sec("goal", "目的と完了の条件", [h("div", { "class": "fig goal" }, [
     h("div", { "class": "main" }, [h("b", { text: "目的" }), GOAL.main])
@@ -513,18 +551,10 @@
     st("リハーサルを重ねるごとに、手順書の完成度が上がる", { x: cx, y: cy + 4, "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }, svg);
     return svg;
   }
-  var stageBox = h("div", null, [
-    h("div", { "class": "fig-title", text: "移行結果の確認（3段階。繰り返しと並行して進める）" }),
-    h("div", { "class": "stage" }, [
-      h("div", null, [h("b", { text: "① R8年度中の移行結果報告資料の作成" }), h("div", { text: "移行テストのあと、その時点の最新データで行う。中間成果物として市町村に提出する" }), h("div", { "class": "who", text: "自チーム" })]),
-      h("div", null, [h("b", { text: "② R9年度の稼働直前の移行結果報告資料の作成" }), h("div", { text: "稼働の直前に、リハーサルやテストで移行した最新データで行う。稼働判定の資料として提出する" }), h("div", { "class": "who", text: "自チーム" })]),
-      h("div", null, [h("b", { text: "③ 最終確認" }), h("div", { text: "本番移行の前後のデータを、移行結果報告資料の観点であらためて出力する" }), h("div", { "class": "who", text: "センター（自チームは支援）" })])
-    ]),
-    h("div", { "class": "arrow-row", text: "①で理由がわかった差異を積み上げておくほど、②で人が調べる差異が減る" })
-  ]);
-  // 切替の流れ（繰り返しの図と3段階の図）。節にはせず、フローの切替の枠の先頭に置く
+  // 切替の流れ（繰り返しの図）。節にはせず、フローの切替の枠の先頭に置く
+  // 移行結果の確認の3段階は、そのフローの冒頭の札だけに書く（2か所に書かない）
   var loopFig = h("div", { "class": "fig", id: "loop" }, [h("div", { "class": "fig-title", text: "切替の流れ" }),
-    h("div", { "class": "loop-wrap" }, [h("div", null, [h("div", { "class": "fig-title", text: "リハーサルから本番までの繰り返し" }), loopSvg()]), stageBox])]);
+    h("div", { "class": "fig-sub", text: "リハーサルから本番までの繰り返し。移行結果の確認は、この繰り返しと並行して進める" }), loopSvg()]);
 
   // 4. フロー
   var legend = h("div", { "class": "legend" }, [
@@ -571,27 +601,46 @@
     });
     return svg;
   }
-  // ---- AIの印の切り替え（画面上で試す。結果はこのブラウザにだけ保存し、ファイルは書き換えない）
+  // ---- 表示のモード
+  // 読むだけの表示：データの正式な AI の印だけを出す。
+  // 編集モード：このブラウザに残した印の変更も出し、AI の印を押して切り替えられる。AI 案の見立ても出す。
+  var EDIT_KEY = "matome-edit", editing = false;
+  try { editing = localStorage.getItem(EDIT_KEY) === "1"; } catch (e) {}
+  var editBtn = h("button", { type: "button", "class": "edit-btn" });
+  editBtn.onclick = function () { setEditing(!editing); };
+  document.querySelector("header").appendChild(editBtn);
+  function setEditing(on) {
+    editing = on;
+    try { localStorage.setItem(EDIT_KEY, on ? "1" : ""); } catch (e) {}
+    document.body.classList.toggle("editing", on);
+    editBtn.textContent = on ? "編集モードを終わる" : "編集モード";
+    editBtn.setAttribute("aria-pressed", on ? "true" : "false");
+    drawFlows(); drawAi();
+  }
+
+  // ---- AIの印の切り替え（編集モードだけ。結果はこのブラウザにだけ保存し、ファイルは書き換えない）
   var AI_KEY = "matome-ai-v1", AI_NEXT = { "": "cand", cand: "fixed", fixed: "" }, AI_NAME = { "": "なし", cand: "AI案", fixed: "AI" };
   var aiOverride = {};
   try { aiOverride = JSON.parse(localStorage.getItem(AI_KEY) || "{}"); } catch (e) { aiOverride = {}; }
   function aiSave() { try { localStorage.setItem(AI_KEY, JSON.stringify(aiOverride)); } catch (e) {} }
   function aiKey(f, x) { return f.id + "/" + x.no; }
-  function aiOf(f, x) { var k = aiKey(f, x); return k in aiOverride ? aiOverride[k] : (x.ai || ""); }
+  function aiLocal(f, x) { var k = aiKey(f, x); return k in aiOverride ? aiOverride[k] : (x.ai || ""); }
+  function aiOf(f, x) { return editing ? aiLocal(f, x) : (x.ai || ""); }
   function aiChanges() {
     var list = [];
     FLOWS.forEach(function (f) { f.phases.forEach(function (p) { p.steps.forEach(function (x) {
-      var now = aiOf(f, x), base = x.ai || "";
+      var now = aiLocal(f, x), base = x.ai || "";
       if (now !== base) list.push(f.name + "／" + x.no + " " + x.t + "：" + AI_NAME[base] + " → " + AI_NAME[now]);
     }); }); });
     return list;
   }
   function aiToggle(f, x) {
-    var next = AI_NEXT[aiOf(f, x)];
+    var next = AI_NEXT[aiLocal(f, x)];
     if (next === (x.ai || "")) delete aiOverride[aiKey(f, x)]; else aiOverride[aiKey(f, x)] = next;
     aiSave(); drawFlows(); drawAi();
   }
   function aiBar() {
+    if (!editing) return null;
     var list = aiChanges(), out = h("textarea", { "class": "ai-out", readonly: "readonly", rows: Math.max(list.length, 2) });
     out.value = list.join("\n");
     out.style.display = "none";
@@ -599,67 +648,97 @@
     btnOut.onclick = function () { out.style.display = ""; out.focus(); out.select(); };
     btnReset.onclick = function () { aiOverride = {}; aiSave(); drawFlows(); drawAi(); };
     return h("div", { "class": "ai-bar" }, [
-      h("span", { text: "作業の枠をクリックすると、AIの印が「なし → AI案 → AI → なし」と切り替わる。" }),
-      list.length ? h("b", { text: "変更 " + list.length + "件" }) : h("span", { "class": "muted", text: "変更なし" }),
+      h("b", { text: "編集モード" }),
+      h("span", { text: "作業の AI の印を押すと「なし → AI案 → AI → なし」と切り替わる（このブラウザにだけ保存）。" }),
+      list.length ? h("b", { text: "ローカルの変更 " + list.length + "件" }) : h("span", { "class": "muted", text: "ローカルの変更なし" }),
       list.length ? btnOut : null, list.length ? btnReset : null, out
     ]);
   }
 
-  // AI案の見立て（残す／要相談）と理由
+  // AI案の見立て（残す／要相談）と理由。編集モードだけで出す
   function aiReviewEl(r) { return h("div", { "class": "ai-review " + r.v }, [h("span", { "class": "v", text: r.v === "ask" ? "要相談" : "残す" }), r.why]); }
-  // 詳しい使い方（AI活用/AIの使い方_フロー名.html）へのリンク。作業の枠のクリック（印の切り替え）には伝えない
-  // 使い方はフローごとのファイル（AI活用/AIの使い方_フロー名.html）にある。共通の型は AIの使い方_共通.html
+  // 詳しい使い方へのリンク。使い方はフローごとのファイル（AI活用/AIの使い方_フロー名.html）にある。共通の型は AIの使い方_共通.html
   function aiGuideFile(id) { var fid = id.split("-")[0], fl = FLOWS.filter(function (g) { return g.id === fid; })[0]; return "AI活用/AIの使い方_" + fl.name + ".html"; }
   function aiGuideEl(f, x) {
     var id = x.aiGuide || f.id + "-" + x.no;  // 飛び先は「フローのid-作業の番号」。別の作業の使い方を使うときだけ aiGuide に書く
-    var a = h("a", { href: aiGuideFile(id) + "#" + id, "class": "ai-guide", text: "詳しい使い方 →" });
-    a.onclick = function (e) { e.stopPropagation(); };
-    return a;
+    return h("a", { href: aiGuideFile(id) + "#" + id, "class": "ai-guide", text: "詳しい使い方 →" });
+  }
+
+  // ---- 作業の枠：見出し（summary）を押すと開く。普段は番号・作業名・いつ・目安・誰が・印だけを出す
+  var ROLE_OF = { own: "worker", leader: "leader", err: "both", outer: "outer" };
+  var roleFilter = "all", openSteps = {};  // 開いている作業は、描き直しても保つ
+  function stepEl(f, x) {
+    var ai = aiOf(f, x), k = aiKey(f, x), changed = editing && ai !== (x.ai || ""), mark = null;
+    if (editing) {
+      mark = h("button", { type: "button", "class": "ai " + (ai || "none"), title: "AI の印を切り替える", text: ai ? AI_NAME[ai] : "＋AI" });
+      mark.onclick = function (e) { e.preventDefault(); e.stopPropagation(); aiToggle(f, x); };
+    } else if (ai) mark = h("span", { "class": "ai " + ai, text: AI_NAME[ai] });
+    var sum = h("summary", null, [mark,
+      h("span", { "class": "no", text: x.no }),
+      h("span", { "class": "t", text: x.t }),
+      x.when ? h("span", { "class": "when", text: "いつ：" + x.when }) : null,
+      x.est ? h("span", { "class": "when", text: "目安：" + x.est }) : null,
+      h("span", { "class": "who", text: x.who }),
+      x.todo ? h("span", { "class": "todo", text: "要確認" }) : null
+    ]);
+    var body = h("div", { "class": "step-body" }, [
+      h("div", { "class": "done", text: "完了：" + x.done }),
+      ai ? h("div", { "class": "ai-what" }, [h("b", { text: "AI：" }), x.aiWhat || "（何をさせるかは未定）", aiGuideEl(f, x)]) : null,
+      editing && ai === "cand" && x.aiReview ? aiReviewEl(x.aiReview) : null
+    ]);
+    var d = h("details", { "class": "step " + x.c + (changed ? " ai-changed" : ""), "data-role": ROLE_OF[x.c] || "outer" }, [sum, body]);
+    if (openSteps[k]) d.open = true;
+    d.addEventListener("toggle", function () { if (d.open) openSteps[k] = 1; else delete openSteps[k]; });
+    return d;
   }
   function flowFig(f) {
     var lead = h("div", { "class": "flow-lead" }, f.lead.map(function (l) {
       return h("span", { "class": "chip" + (l[0] === "key" ? " key" : "") }, [l[0] === "key" ? "" : l[0] + "：", l[1]]);
     }));
     var cols = h("div", { "class": "flow" }, f.phases.map(function (p) {
-      var kids = [h("div", { "class": "phase-h" }, [p.name])];
-      p.steps.forEach(function (x) {
-        var ai = aiOf(f, x), changed = ai !== (x.ai || "");
-        var card = h("div", { "class": "step " + x.c + (changed ? " ai-changed" : ""), title: "クリックで AI の印を切り替え" }, [
-          ai ? h("span", { "class": "ai " + ai, text: AI_NAME[ai] }) : null,
-          h("span", { "class": "no", text: x.no }),
-          h("span", { "class": "t", text: x.t }),
-          x.when ? h("div", { "class": "when", text: "いつ：" + x.when }) : null,
-          h("div", { "class": "when" }, ["目安：", x.est || h("span", { "class": "muted", text: "要確認" })]),
-          h("span", { "class": "who", text: x.who }),
-          h("div", { "class": "done" }, ["完了：" + x.done, x.todo ? h("span", { "class": "todo", text: " 要確認" }) : null]),
-          ai ? h("div", { "class": "ai-what" }, [h("b", { text: "AI：" }), x.aiWhat || "（何をさせるかは未定）", aiGuideEl(f, x)]) : null,
-          ai === "cand" && x.aiReview ? aiReviewEl(x.aiReview) : null
-        ]);
-        card.onclick = function () { aiToggle(f, x); };
-        kids.push(card);
-      });
+      var kids = [h("div", { "class": "phase-h" }, [p.name])].concat(p.steps.map(function (x) { return stepEl(f, x); }));
       if (p.rule) kids.push(h("div", { "class": "rule" }, [h("b", { text: p.rule.title }), h("ol", null, p.rule.items.map(function (i) { return h("li", { text: i }); }))]));
       return h("div", { "class": "phase" }, kids);
     }));
     var title = h("div", { "class": "fig-title" }, [f.name, f.guide ? h("a", { href: f.guide, "class": "guide", text: "詳しい説明 →" }) : h("span", { "class": "guide muted", text: "詳しい説明：未作成" })]);
     return h("div", { "class": "fig", id: "flow-" + f.id }, [title, lead, cols]);
   }
+  // フローの上の操作の列：役割で絞る、すべて開く／閉じる
+  function flowTools() {
+    var roles = [["all", "すべて"], ["worker", "作業者"], ["leader", "リーダー・現場リーダー等"]];
+    var btns = roles.map(function (r) {
+      var b = h("button", { type: "button", "class": "role-btn" + (roleFilter === r[0] ? " on" : ""), "aria-pressed": roleFilter === r[0] ? "true" : "false", text: r[1] });
+      b.onclick = function () { roleFilter = r[0]; drawFlows(); };
+      return b;
+    });
+    function all(open) {
+      FLOWS.forEach(function (f) { f.phases.forEach(function (p) { p.steps.forEach(function (x) { if (open) openSteps[aiKey(f, x)] = 1; else delete openSteps[aiKey(f, x)]; }); }); });
+      drawFlows();
+    }
+    var bOpen = h("button", { type: "button", text: "すべて開く" }), bClose = h("button", { type: "button", text: "すべて閉じる" });
+    bOpen.onclick = function () { all(true); }; bClose.onclick = function () { all(false); };
+    return h("div", { "class": "flow-tools" }, [h("span", { "class": "label", text: "役割で絞る：" })].concat(btns).concat([
+      h("span", { "class": "sep" }), bOpen, bClose,
+      h("div", { "class": "note", text: "作業の見出しを押すと、完了の状態と AI の詳細が開く。所要時間の目安は調査中（値が入った作業だけ、枠に出す）。" })
+    ]));
+  }
   // イベントの区分（FRAME）ごとに、区分の色の枠でくくる
   function fill(box, kids) { while (box.firstChild) box.removeChild(box.firstChild); kids.forEach(function (k) { if (k) box.appendChild(k); }); }
   var flowsBox = h("div");
-  // 区分の枠に入れるフロー：FRAME のイベントか、group でその区分を指定したもの
   // 区分の時間軸の図（GANTT）。基準日が違うものは、1つの図の中に段を分けて並べる
   function ganttFig(g) {
     var kids = [h("div", { "class": "fig-title", text: g.name + "の時間軸" })];
     GANTT[g.name].forEach(function (T) { kids.push(h("div", { "class": "gantt-sub", text: T.title }), timelineSvg(T)); });
     return h("div", { "class": "fig", id: "gantt-" + g.g }, kids);
   }
+  // 区分の枠に入れるフロー：FRAME のイベントか、group でその区分を指定したもの
   function flowsOf(g) {
     return FLOWS.filter(function (f) { return f.group === g.name || g.events.some(function (e) { return e.id === f.id; }); });
   }
   function drawFlows() {
     var y = window.scrollY;
-    fill(flowsBox, [legend, aiBar()].concat(FRAME.map(function (g) {
+    flowsBox.className = roleFilter === "all" ? "" : "only-" + roleFilter;
+    fill(flowsBox, [legend, flowTools(), aiBar()].concat(FRAME.map(function (g) {
       var list = flowsOf(g), kids;
       if (list.some(function (f) { return f.cycle; })) {
         // 切替：流れの図 → 繰り返しの段（cycle の順）→ 並行して進めるもの
@@ -683,22 +762,24 @@
       FLOWS.forEach(function (f) { f.phases.forEach(function (p) { p.steps.forEach(function (x) {
         if (aiOf(f, x) !== lv) return;
         cards.push(h("div", { "class": "ai-card" }, [h("span", { "class": "lv " + (lv === "fixed" ? "fixed" : "aicand"), text: lv === "fixed" ? "決まった" : "案" }),
-          h("b", { text: x.t }), h("div", { "class": "where", text: f.name + "／" + x.no }), h("div", { "class": "what" }, [x.aiWhat || "（何をさせるかは未定）", aiGuideEl(f, x)]), lv === "cand" && x.aiReview ? aiReviewEl(x.aiReview) : null]));
+          h("b", { text: x.t }), h("div", { "class": "where", text: f.name + "／" + x.no }), h("div", { "class": "what" }, [x.aiWhat || "（何をさせるかは未定）", aiGuideEl(f, x)]),
+          editing && lv === "cand" && x.aiReview ? aiReviewEl(x.aiReview) : null]));
       }); }); });
     });
     fill(aiBox, [
       cards.length ? h("div", { "class": "ai-grid" }, cards) : h("div", { "class": "muted", text: "AIの印の付いた作業はない" }),
-      h("div", { "class": "no-ai", text: "この一覧は、フローの「AI」「AI案」の印から作っている。印はフローの作業の枠をクリックして切り替える。" }),
+      h("div", { "class": "no-ai", text: "この一覧は、フローの「AI」「AI案」の印から作っている。印の検討は、編集モードで行う。" }),
       h("div", { "class": "no-ai" }, ["AIに頼むときの共通の型（共通の前置き・渡してよいデータ・記録）：", h("a", { href: "AI活用/AIの使い方_共通.html", text: "AIの使い方_共通 →" })]),
       h("div", { "class": "no-ai" }, [h("b", { text: "置くかどうかの観点：" }), AI_RULE]),
       h("div", { "class": "no-ai", text: NO_AI + "（案）" })
     ]);
   }
   sec("ai", "AIを使うところ（決まったものと案）", [aiBox]);
-  drawFlows(); drawAi();
+  setEditing(editing);  // 編集モードかどうかを反映して、フローと AI の一覧を描く
 
-  // 6. ツールの候補
-  sec("tools", "ツールの候補（M2で決める）", [h("div", { "class": "fig" }, [
+  // 6. ツールの候補（M2 で決める計画の情報。読むだけの表示でも、畳んで残す）
+  sec("tools", "ツールの候補（M2で決める）", [h("details", { "class": "fig fold" }, [
+    h("summary", { text: "候補 " + TOOLS.length + " つと、M2 での決め方（押すと開く）" }),
     h("div", { "class": "ai-grid" }, TOOLS.map(function (x) {
       return h("div", { "class": "ai-card" }, [h("span", { "class": "lv cand", text: "候補" }), h("b", { text: x.t }), h("div", { "class": "where", text: x.where }), h("div", { "class": "what", text: x.eff })]);
     })),
@@ -762,6 +843,34 @@
       return h("div", null, [h("b", { text: o.t }), h("ul", null, o.items.map(function (i) { return h("li", { text: i }); }))]);
     }))
   ]);
+
+  // 8. 用語集
+  var GLOSSARY = [
+    ["センター", "委託元。自チームは、センターの開発担当に委託で所属している"],
+    ["開発担当", "センターの部署。業務担当をまたいで受け持つ。アプリのバージョンアップは、業務担当から自チームと移行チームに委託されている"],
+    ["業務担当", "住民記録・国保など、市町村の各業務を受け持つセンターの部署"],
+    ["移行チーム", "自チームとは別のセクションのチーム。開発担当分の業務の、抽出工程を実施している"],
+    ["抽出工程", "移行ツールのうち、今のシステムからデータを取り出す工程"],
+    ["移管資産", "移行チームに移管した抽出工程を実施するための資産（更新した移行ツールなど）。自チームが取りまとめ、テストしてリリースする"],
+    ["確認者", "切替の当日、作業者に作業の開始を指示し、ログや件数を確かめるセンターの人"],
+    ["現場リーダー等", "切替の当日、エラーが出たときに、原因と影響を確認者に説明する自チームの人"],
+    ["リハーサル・全体移行テスト・本番切替", "本番の環境で行う移行。違うのは目的・実施日・結果の扱いだけ"],
+    ["タイムチャート", "切替の当日の、作業の時刻表"],
+    ["ボード", "課題や作業を起票して、進み具合を管理するタスクボード"],
+    ["課題管理表", "振り返りなどで出た課題を管理する表"],
+    ["移行結果報告資料", "移行前後のデータを比べた結果の報告資料。正式名称は「データ移行仕様書兼データ移行・動作検証結果報告書」"],
+    ["iko_gui", "移行ツールを実行するための、自作の画面（GUI）"],
+    ["k8s（Kubernetes）", "システムが動いている基盤。ログは pod ごとに出る"],
+    ["環境バージョン一覧", "環境ごとの、アプリの版の一覧"],
+    ["開発管理台帳", "稼働後のバージョンアップで、検証の結果をまとめて承認を得るための台帳"],
+    ["稟議", "開発担当が、本番に適用する前に承認を得る手続き（2〜3日かかる）"]
+  ];
+  sec("glossary", "用語集", [h("div", { "class": "fig" }, [h("dl", { "class": "glossary" }, GLOSSARY.reduce(function (a, g) { return a.concat([h("dt", { text: g[0] }), h("dd", { text: g[1] })]); }, []))])]);
+
+  // 印刷するときは、畳んだ枠をすべて開き、終わったら元に戻す
+  var printOpened = [];
+  window.addEventListener("beforeprint", function () { printOpened = [].slice.call(document.querySelectorAll("details:not([open])")); printOpened.forEach(function (d) { d.open = true; }); });
+  window.addEventListener("afterprint", function () { printOpened.forEach(function (d) { d.open = false; }); printOpened = []; });
 })();
 </script>
 </body>
