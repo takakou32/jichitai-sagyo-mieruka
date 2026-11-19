@@ -127,11 +127,11 @@
   .step .ai { position: absolute; top: 6px; right: 6px; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 0 5px; background: var(--s3); color: var(--on-bar); }
   .step .ai.cand { background: var(--surface); color: var(--ink); border: 1.5px solid var(--s3); padding: 0 4px; }
   .step.ai-changed { outline: 2px dashed var(--s3); outline-offset: 1px; }
-  .step > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; padding-right: 34px; }
+  .step > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; padding-right: 40px; }
   .step > summary::-webkit-details-marker { display: none; }
   .step > summary .no, .step > summary .t, .step > summary .when { flex-basis: 100%; }
-  .step > summary::after { content: "▸"; position: absolute; right: 6px; bottom: 4px; color: var(--muted); font-size: 11px; }
-  .step[open] > summary::after { content: "▾"; }
+  .step > summary .no::before { content: "▸ 開く　"; color: var(--s1); font-weight: 700; }
+  .step[open] > summary .no::before { content: "▾ 閉じる　"; }
   .step > summary:focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; border-radius: 4px; }
   .step > summary .todo { font-size: 11px; }
   .step button.ai { font: inherit; font-size: 10px; font-weight: 700; cursor: pointer; border: none; }
@@ -211,7 +211,7 @@
     .goal, .frame, .ai-grid, .open, .howto { grid-template-columns: 1fr 1fr; }
     .loop-wrap { grid-template-columns: 1fr; }
   }
-  @media print { header { position: static; } .flow { grid-auto-flow: row; } .ai-bar, .flow-tools, .edit-btn { display: none; } .step.ai-changed { outline: none; } .step > summary::after { content: none; } }
+  @media print { header { position: static; } .flow { grid-auto-flow: row; } .ai-bar, .flow-tools, .edit-btn { display: none; } .step.ai-changed { outline: none; } .step > summary .no::before, .step[open] > summary .no::before { content: none; } }
 </style>
 </head>
 <body>
@@ -234,7 +234,7 @@
   // ai: AIを使うところ（fixed=決定、cand=案）  aiWhat: AIに何をさせるか  aiGuide: 別の作業の使い方を使うときの飛び先（例：run-E2）  aiReview: 案の見立て（keep=残す、ask=要相談）  todo: 要確認
   // =====================================================================
 
-  var META = { version: "v1.0", updated: "2026-11-19" };  // 直したら版と日付を上げる
+  var META = { version: "v1.1", updated: "2026-11-19" };  // 直したら版と日付を上げる
 
   var GOAL = {
     main: "令和9年度に集中する31団体の切替を、要員が減ったり入れ替わったりしても、品質を落とさずにやり遂げられる体制を整える。そのために作業を見える化してフローに整理し、フローをもとにしたツールで、特定の人に頼っている作業を減らす。",
@@ -668,7 +668,9 @@
   }
 
   // ---- 作業の枠：見出し（summary）を押すと開く。普段は番号・作業名・いつ・目安・誰が・印だけを出す
+  // 役割で絞るときの扱い。エラーのときの作業（E1→E2→E3、稼働前の E）は続いた流れなので、どの役割でも残す
   var ROLE_OF = { own: "worker", leader: "leader", err: "both", outer: "outer" };
+  function roleOf(x) { return /^E\d*$/.test(x.no) ? "both" : (ROLE_OF[x.c] || "outer"); }
   var roleFilter = "all", openSteps = {};  // 開いている作業は、描き直しても保つ
   function stepEl(f, x) {
     var ai = aiOf(f, x), k = aiKey(f, x), changed = editing && ai !== (x.ai || ""), mark = null;
@@ -689,7 +691,7 @@
       ai ? h("div", { "class": "ai-what" }, [h("b", { text: "AI：" }), x.aiWhat || "（何をさせるかは未定）", aiGuideEl(f, x)]) : null,
       editing && ai === "cand" && x.aiReview ? aiReviewEl(x.aiReview) : null
     ]);
-    var d = h("details", { "class": "step " + x.c + (changed ? " ai-changed" : ""), "data-role": ROLE_OF[x.c] || "outer" }, [sum, body]);
+    var d = h("details", { "class": "step " + x.c + (changed ? " ai-changed" : ""), "data-role": roleOf(x) }, [sum, body]);
     if (openSteps[k]) d.open = true;
     d.addEventListener("toggle", function () { if (d.open) openSteps[k] = 1; else delete openSteps[k]; });
     return d;
@@ -871,9 +873,17 @@
   sec("glossary", "用語集", [h("div", { "class": "fig" }, [h("dl", { "class": "glossary" }, GLOSSARY.reduce(function (a, g) { return a.concat([h("dt", { text: g[0] }), h("dd", { text: g[1] })]); }, []))])]);
 
   // 印刷するときは、畳んだ枠をすべて開き、終わったら元に戻す
-  var printOpened = [];
-  window.addEventListener("beforeprint", function () { printOpened = [].slice.call(document.querySelectorAll("details:not([open])")); printOpened.forEach(function (d) { d.open = true; }); });
-  window.addEventListener("afterprint", function () { printOpened.forEach(function (d) { d.open = false; }); printOpened = []; });
+  // beforeprint が来ない印刷のしかたもあるので、印刷用の表示に切り替わったとき（matchMedia）にも開く
+  var printOpened = null;
+  function openForPrint() { if (printOpened) return; printOpened = [].slice.call(document.querySelectorAll("details:not([open])")); printOpened.forEach(function (d) { d.open = true; }); }
+  function restoreAfterPrint() { if (!printOpened) return; printOpened.forEach(function (d) { d.open = false; }); printOpened = null; }
+  window.addEventListener("beforeprint", openForPrint);
+  window.addEventListener("afterprint", restoreAfterPrint);
+  if (window.matchMedia) {
+    var printMq = window.matchMedia("print");
+    var onPrintMq = function (e) { if (e.matches) openForPrint(); else restoreAfterPrint(); };
+    if (printMq.addEventListener) printMq.addEventListener("change", onPrintMq); else if (printMq.addListener) printMq.addListener(onPrintMq);
+  }
 })();
 </script>
 </body>
