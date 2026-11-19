@@ -524,7 +524,7 @@
 
   // 3. 切替の流れ
   function loopSvg() {
-    var W = 560, H = 360, cx = 280, cy = 180, rx = 190, ry = 120;
+    var W = 660, H = 360, cx = 330, cy = 180, rx = 190, ry = 120;
     var svg = s("svg", { width: W, height: H, viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": "リハーサルから本番までの繰り返し" });
     s("defs", {}, svg).innerHTML = '<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--axis)"/></marker>';
     s("ellipse", { cx: cx, cy: cy, rx: rx, ry: ry, fill: "none", stroke: "var(--axis)", "stroke-width": 2, "stroke-dasharray": "4 4" }, svg);
@@ -548,7 +548,8 @@
         st(line, { x: x, y: y - hh / 2 + 20 + i * 16, "text-anchor": "middle", fill: i ? "var(--ink-2)" : "var(--ink)", "font-size": i ? 11 : 12, "font-weight": i ? 400 : 700 }, svg);
       });
     });
-    st("リハーサルを重ねるごとに、手順書の完成度が上がる", { x: cx, y: cy + 4, "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }, svg);
+    st("リハーサルを重ねるごとに、", { x: cx, y: cy - 4, "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }, svg);
+    st("手順書の完成度が上がる", { x: cx, y: cy + 12, "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }, svg);
     return svg;
   }
   // 切替の流れ（繰り返しの図）。節にはせず、フローの切替の枠の先頭に置く
@@ -595,7 +596,9 @@
           // 点の色は役割に合わせる。実施は黒（赤は要確認だけに使う）
           var dot = { run: "var(--ink)", leader: "var(--s1-soft)", outer: "var(--s2)" }[it.c] || "var(--s1)";
           s("circle", { cx: X(it.at), cy: y, r: 6, stroke: it.c === "leader" ? "var(--s1)" : "var(--surface)", "stroke-width": 2, fill: dot }, svg);
-          st(it.t, { x: X(it.at), y: y + 25, "text-anchor": "middle", fill: "var(--ink)", "font-size": 11, "font-weight": it.c === "run" ? 700 : 400 }, svg);
+          // 基準日の線の上にある点は、線と重ならないよう文字を右横に置く
+          var onBase = it.at === (T.base != null ? T.base : n);
+          st(it.t, { x: onBase ? X(it.at) + 12 : X(it.at), y: onBase ? y + 4 : y + 25, "text-anchor": onBase ? "start" : "middle", fill: "var(--ink)", "font-size": 11, "font-weight": it.c === "run" ? 700 : 400 }, svg);
         }
       });
     });
